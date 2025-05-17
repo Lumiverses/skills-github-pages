@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-theme">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Game Database - Lumiverse</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"> 
+    <style>
+        :root {
+            --accent-color: #007aff; 
+            --highlight-color-light: rgba(255, 255, 255, 0.6);
+            --shadow-color-light: rgba(0, 0, 0, 0.15);
+            --highlight-color-dark: rgba(255, 255, 255, 0.1);
+            --shadow-color-dark: rgba(0, 0, 0, 0.3);
+
+            --bg-light: #f0f2f5; 
+            --glass-bg-light: rgba(255, 255, 255, 0.55); 
+            --glass-border-light: rgba(200, 200, 200, 0.3);
+            --text-primary-light: #1d1d1f;
+            --text-secondary-light: #6e6e73;
+            
+            --bg-dark: #000000; 
+            --glass-bg-dark: rgba(28, 28, 30, 0.70); 
+            --glass-border-dark: rgba(120, 120, 128, 0.2); 
+            --text-primary-dark: #ffffff;
+            --text-secondary-dark: #8e8e93;
+            --text-code-dark: #a1a1aa; 
+            --text-code-light: #52525b;
+
+            --icon-color-action: #0ea5e9;
+            --icon-color-target: #22c55e;
+            --icon-color-details: #eab308;
+            --icon-color-condition: #3b82f6;
+            --icon-color-timing: #dc2626;
+            --icon-color-cost: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        .light-theme {
+            --bg-color: var(--bg-light);
+            --glass-bg: var(--glass-bg-light);
+            --glass-border: var(--glass-border-light);
+            --text-primary: var(--text-primary-light);
+            --text-secondary: var(--text-secondary-light);
+            --text-code: var(--text-code-light);
+            --shadow-color: var(--shadow-color-light);
+        }
+        .light-theme #headerLogo {
+            filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(1.2); /* Invert logo colors for light mode */
+        }
+
+
+        .dark-theme {
+            --bg-color: var(--bg-dark);
+            --glass-bg: var(--glass-bg-dark);
+            --glass-border: var(--glass-border-dark);
+            --text-primary: var(--text-primary-dark);
+            --text-secondary: var(--text-secondary-dark);
+            --text-code: var(--text-code-dark);
+            --shadow-color: var(--shadow-color-dark);
+        }
+        
+        body { background-color: var(--bg-color); color: var(--text-primary); }
+        .glassmorphic { background-color: var(--glass-bg); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border: 1px solid var(--glass-border); box-shadow: 0 6px 20px var(--shadow-color); }
+        .card-thumbnail { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .card-thumbnail:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 30px var(--shadow-color); }
+        
+        .card-thumbnail-image-container img, #detailCardImage, .deck-card-list-image { border-radius: 0px !important; }
+        .card-thumbnail-image-container, #detailCardImageContainer { border-radius: 0px !important; }
+        .card-thumbnail-image-container img { width: 100%; height: auto; max-height: 350px; object-fit: contain; }
+        .related-cards-container .card-thumbnail-image-container img { max-height: 280px; }
+        #detailCardImageContainer img { max-width: 100%; height: auto; object-fit: contain; }
+
+        .syntax-chip-grid { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+        .syntax-tile { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--glass-border); border-radius: 8px; background-color: rgba(var(--glass-bg-dark-rgb, 28, 28, 30), 0.4); backdrop-filter: blur(5px) saturate(100%); -webkit-backdrop-filter: blur(5px) saturate(100%); }
+        .dark-theme .syntax-tile { background-color: rgba(40,40,42,0.5); }
+        .light-theme .syntax-tile { background-color: rgba(255,255,255,0.3); }
+        .syntax-tile-text-content { flex-grow: 1; text-align: left; font-size: 0.875rem; line-height: 1.25rem; color: var(--text-primary); margin-right: 0.75rem; }
+        .syntax-tile-text-content strong { font-weight: 600; }
+        .syntax-tile-text-content .condition-text, .syntax-tile-text-content .timing-text { font-style: italic; opacity: 0.8; font-size: 0.8em; display: block; margin-top: 0.25rem; }
+        .syntax-tile-icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .tile-action .syntax-tile-icon { color: var(--icon-color-action); } .tile-target .syntax-tile-icon { color: var(--icon-color-target); } .tile-details .syntax-tile-icon { color: var(--icon-color-details); } .tile-condition .syntax-tile-icon { color: var(--icon-color-condition); } .tile-timing .syntax-tile-icon { color: var(--icon-color-timing); } .tile-cost .syntax-tile-icon { color: var(--icon-color-cost); }
+
+        #detailCardAttributesSection.glassmorphic { padding: 1.5rem; }
+        .attribute-list { font-family: 'Roboto Mono', monospace; color: var(--text-code); font-size: 0.9rem; line-height: 1.7; padding: 1rem 0; }
+        .attribute-list div::before { content: "// "; opacity: 0.5; }
+        .attribute-list strong { color: var(--text-primary); font-weight: 500; }
+
+        .theme-switch-wrapper { display: flex; align-items: center; position: relative; }
+        .theme-switch { display: inline-block; height: 26px; position: relative; width: 50px; margin-left:10px; }
+        .theme-switch input { display:none; }
+        .slider { background-color: rgba(120,120,128,0.5); bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 26px; }
+        .slider:before { background-color: #fff; bottom: 3px; content: ""; height: 20px; left: 3px; position: absolute; transition: .4s; width: 20px; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 10;}
+        input:checked + .slider { background-color: var(--accent-color); }
+        input:checked + .slider:before { transform: translateX(24px); }
+        .dark-theme .slider { background-color: rgba(74,85,104,0.7); } 
+        .dark-theme .slider:before { background-color: var(--glass-bg-dark); } 
+        .theme-icon { position: absolute; top: 50%; transform: translateY(-50%); transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; }
+        .sun-icon { left: 5px; opacity: 0; color: #facc15; /* Tailwind yellow-400 */ }
+        .moon-icon { right: 5px; opacity: 1; color: #f3f4f6; /* Tailwind gray-100 */ }
+        .light-theme .sun-icon { opacity: 1; }
+        .light-theme .moon-icon { opacity: 0; }
+        .dark-theme .sun-icon { opacity: 0; }
+        .dark-theme .moon-icon { opacity: 1; }
+
+
+        html { overflow-y: scroll; } .hidden-section { display: none !important; }
+        .related-cards-container::-webkit-scrollbar { height: 20px; width: 20px; } .related-cards-container::-webkit-scrollbar-track { background: rgba(120, 120, 128, 0.1); border-radius: 10px; border: 1px solid var(--glass-border); } .related-cards-container::-webkit-scrollbar-thumb { background: var(--glass-bg); border-radius: 10px; border: 1px solid var(--glass-border); box-shadow: 0 3px 8px var(--shadow-color); } .dark-theme .related-cards-container::-webkit-scrollbar-thumb { background: var(--glass-bg-dark); border-color: var(--glass-border-dark); }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s 0.3s; } .modal-overlay.active { opacity: 1; visibility: visible; transition: opacity 0.3s ease; } 
+        .modal-content { padding: 1rem; /* Reduced padding for mobile */ sm:padding: 1.5rem; md:padding: 2rem; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; border-radius: 16px; }
+        .onboarding-step { display: none; } .onboarding-step.active { display: block; } .onboarding-input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid var(--glass-border); border-radius: 8px; background-color: var(--glass-bg); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); color: var(--text-primary); box-shadow: 0 2px 5px var(--shadow-color); } .onboarding-input::placeholder { color: var(--text-secondary); } .onboarding-button { padding: 0.75rem 1.5rem; border: 1px solid var(--glass-border); border-radius: 8px; background-color: var(--glass-bg); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); color: var(--accent-color); font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px var(--shadow-color); transition: background-color 0.2s, box-shadow 0.2s; } .onboarding-button:hover { background-color: rgba(0, 122, 255, 0.2); box-shadow: 0 4px 10px var(--shadow-color); } .survey-option label { margin-left: 0.5rem; color: var(--text-secondary); } .survey-option input[type="checkbox"] { appearance: none; background-color: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: 0 1px 2px var(--shadow-color); border-radius: 4px; width: 20px; height: 20px; cursor: pointer; position: relative; margin-right: 0.5rem; vertical-align: middle; } .survey-option input[type="checkbox"]:checked { background-color: var(--accent-color); border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); } .survey-option input[type="checkbox"]:checked::after { content: '✔'; color: white; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 14px; }
+        .deck-icon-btn svg { width: 28px; height: 28px; color: var(--text-secondary); transition: color 0.2s; } .deck-icon-btn:hover svg { color: var(--accent-color); }
+        .auth-button, .deck-icon-btn { height: 38px; /* Match typical button height */ display: inline-flex; align-items: center; }
+
+
+        .search-container { position: relative; }
+        #search { padding-left: 3.5rem; /* Increased for larger icon + caret */ padding-right: 1rem; border: none !important; background-color: transparent !important; box-shadow: none !important; font-size: 1.125rem; /* Larger placeholder/input text */ }
+        .search-bar-area.glassmorphic { /* Parent provides the visual bar */ }
+        .search-icon-wrapper { position: absolute; top: 50%; left: 1rem; /* Adjusted for larger icon */ transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; z-index: 1; }
+        .search-icon-wrapper svg { height: 1.875rem; width: 1.875rem; /* 50% larger: 1.25rem * 1.5 = 1.875rem (h-7.5 w-7.5) */ }
+        .blinking-caret { position: absolute; left: 3.25rem; /* After larger icon */ top: 50%; transform: translateY(-50%); height: 1.35em; /* 50% larger */ width: 2.25px; /* 50% larger */ background-color: var(--text-primary-dark); animation: blink 1s infinite steps(1, end); z-index: 0; pointer-events: none; }
+        .light-theme .blinking-caret { background-color: var(--text-primary-light); }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        
+        #cardTypeFilterDropdown { color: var(--text-primary); background-color: var(--glass-bg); border: 1px solid var(--glass-border); padding: 0.625rem 2.5rem 0.625rem 0.75rem; border-radius: 9999px; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236B7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22M6%208l4%204%204-4%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.25em 1.25em; }
+        .dark-theme #cardTypeFilterDropdown { background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%23D1D5DB%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22M6%208l4%204%204-4%22%2F%3E%3C%2Fsvg%3E'); }
+        #userWelcomeMessage { color: var(--text-secondary); margin-left: 10px; font-size: 0.9rem; }
+        .error-message { color: #ef4444; font-size: 0.75rem; margin-top: -0.5rem; margin-bottom: 0.5rem; }
+
+        /* Rules Page Specific Styles */
+        #rulesView { line-height: 1.7; }
+        #rulesView h2 { font-size: 1.75rem; sm:font-size: 2rem; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; color: var(--accent-color); border-bottom: 2px solid var(--glass-border); padding-bottom: 0.5rem; }
+        #rulesView h3 { font-size: 1.25rem; sm:font-size: 1.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-primary); }
+        #rulesView h4 { font-size: 1.1rem; sm:font-size: 1.2rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: var(--text-primary); }
+        #rulesView p, #rulesView li { margin-bottom: 0.75rem; color: var(--text-secondary); }
+        #rulesView strong { color: var(--text-primary); font-weight: 600; }
+        #rulesView ul { list-style-type: disc; margin-left: 1.5rem; sm:margin-left: 2rem; }
+        #rulesView ol { list-style-type: decimal; margin-left: 1.5rem; sm:margin-left: 2rem; }
+        .rules-illustration-placeholder { border: 2px dashed var(--glass-border); padding: 1rem; margin: 1rem 0; text-align: center; color: var(--text-secondary); font-style: italic; border-radius: 8px; }
+
+    </style>
+</head>
+<body>
+    <div id="app" class="container mx-auto p-2 sm:p-4 md:p-8">
+        <header class="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-center">
+            <div class="flex-grow flex items-center justify-center sm:justify-start w-full sm:w-auto mb-4 sm:mb-0"> 
+                <a href="javascript:void(0);" onclick="showGalleryView();" title="Go to Card Gallery" class="flex items-center mr-2">
+                    <img id="headerLogo" src="https://assets-global.website-files.com/6572109dffe2c406961465ca/65721689427c1e9fc0d9a9ce_Lumi%20Starblade%20Logo-p-500.png" alt="Logo" style="height: 20px; width: auto;">
+                </a>
+                <p class="text-sm sm:text-base" style="color: var(--text-secondary);">Browse & Discover</p> <span id="userWelcomeMessage" class="ml-3 text-xs sm:text-sm hidden sm:inline" style="color: var(--text-secondary);"></span>
+            </div>
+            <div class="flex items-center flex-wrap justify-center sm:justify-end gap-2">
+                <button id="howToPlayButton" class="auth-button glassmorphic text-xs sm:text-sm font-semibold py-2 px-3 transition duration-150 ease-in-out rounded-lg" style="color: var(--accent-color);">How to Play</button>
+                <button id="signUpButton" class="auth-button glassmorphic text-xs sm:text-sm font-semibold py-2 px-3 transition duration-150 ease-in-out rounded-lg" style="color: var(--accent-color);">Sign Up</button>
+                <button id="logoutButton" class="auth-button hidden glassmorphic text-xs sm:text-sm font-semibold py-2 px-3 transition duration-150 ease-in-out rounded-lg" style="color: var(--accent-color);">Logout</button>
+                <button id="deckIcon" class="deck-icon-btn glassmorphic rounded-lg p-2" title="View Deck">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 sm:h-auto sm:w-auto"> <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <main id="mainContent">
+            <section id="galleryView">
+                <div class="mb-6 sm:mb-8 p-4 sm:p-6 glassmorphic rounded-lg search-bar-area"> 
+                    <div class="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4">
+                        <div class="flex-grow search-container relative order-1">
+                            <div class="search-icon-wrapper">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                                </svg>
+                            </div>
+                            <span class="blinking-caret" aria-hidden="true"></span>
+                            <input type="text" id="search" 
+                                   class="w-full p-2.5 transition rounded-full text-sm sm:text-base" 
+                                   style="color: var(--text-primary);">
+                        </div>
+                        <div class="flex-shrink-0 order-2 md:ml-4 w-full md:w-auto"> 
+                            <select id="cardTypeFilterDropdown" class="focus:ring-2 focus:ring-[var(--accent-color)] transition w-full text-sm sm:text-base">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="cardGrid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6"></div> <p id="noResults" class="text-center text-lg sm:text-xl py-10 hidden" style="color: var(--text-secondary);">No cards found.</p>
+            </section>
+
+            <section id="detailView" class="hidden p-4 sm:p-6 md:p-10 glassmorphic rounded-lg">
+                <button id="backToGallery" class="mb-4 sm:mb-6 glassmorphic text-sm font-semibold py-2 px-3 sm:px-4 transition duration-150 ease-in-out inline-flex items-center rounded-lg" style="color: var(--accent-color);">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
+                    Back
+                </button>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+                    <div class="md:col-span-1 flex justify-center items-start">
+                        <div id="detailCardImageContainer" class="glassmorphic p-2 sm:p-2.5 w-full"> 
+                             <img id="detailCardImage" src="" alt="Card Image" class="mx-auto"
+                                 onerror="this.onerror=null; this.src='https://placehold.co/400x560/e0e5ec/374151?text=Image+Not+Found'; this.parentElement.classList.add('flex', 'items-center', 'justify-center');">
+                        </div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <h2 id="detailCardName" class="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2" style="color: var(--text-primary);"></h2>
+                        <p id="detailCardType" class="text-lg sm:text-xl font-semibold mb-3 sm:mb-6" style="color: var(--accent-color);"></p>
+                        <button id="detailAddToDeckBtn" class="mb-4 sm:mb-6 glassmorphic text-sm font-semibold py-2 px-3 sm:px-4 transition duration-150 ease-in-out rounded-lg w-full sm:w-auto" style="color: var(--accent-color);">Add to Deck</button>
+                        
+                        <div id="detailCardTextSection" class="mb-4 sm:mb-6"> 
+                            <p id="detailCardText" class="leading-relaxed whitespace-pre-line text-sm sm:text-base" style="color: var(--text-secondary);"></p>
+                        </div>
+                        
+                        <div id="detailCardAttributesSection" class="mb-4 sm:mb-6 glassmorphic rounded-lg p-3 sm:p-4 md:p-6"> 
+                            <h3 class="text-md sm:text-lg font-semibold mb-2" style="color: var(--text-primary);">Code:</h3> <div id="attributeListContainer" class="attribute-list text-xs sm:text-sm"> 
+                            </div>
+                            <div id="detailCardSyntaxSection" class="mt-3 sm:mt-4"> 
+                                <div id="detailCardSyntax" class="syntax-chip-grid"> 
+                                </div>
+                            </div>
+                        </div>
+                        <p id="noDetailedInfo" class="italic hidden-section text-sm sm:text-base" style="color: var(--text-secondary);">Detailed information is not available.</p>
+                    </div>
+                </div>
+                <div class="mt-8 sm:mt-12">
+                    <h3 id="relatedCardsTitle" class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 border-b pb-2" style="color: var(--text-primary); border-color: rgba(128,128,128,0.2);"></h3>
+                    <div id="relatedCardsContainer" class="related-cards-container flex overflow-x-auto gap-3 sm:gap-4 pb-3 sm:pb-4"></div>
+                    <p id="noRelatedCards" class="text-center text-md sm:text-lg py-6 hidden" style="color: var(--text-secondary);">No other cards in this category.</p>
+                </div>
+            </section>
+
+            <section id="rulesView" class="hidden p-4 sm:p-6 md:p-10 glassmorphic rounded-lg">
+                <button id="backToGalleryFromRules" class="mb-4 sm:mb-6 glassmorphic text-sm font-semibold py-2 px-3 sm:px-4 transition duration-150 ease-in-out inline-flex items-center rounded-lg" style="color: var(--accent-color);">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
+                    Back
+                </button>
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-center" style="color: var(--accent-color);">How to Play Lumiverse</h1>
+                
+                <div id="rulesContentContainer" class="text-sm sm:text-base">
+                    </div>
+            </section>
+        </main>
+
+        <footer class="mt-8 sm:mt-12 py-6 sm:py-8 text-center glassmorphic rounded-t-lg text-xs sm:text-sm" style="color: var(--text-secondary);">
+            <div class="theme-switch-wrapper inline-flex glassmorphic p-1 mb-3 sm:mb-4 rounded-full">
+                <span class="ml-2 sm:ml-3 mr-1 text-xs sm:text-sm">Theme:</span> 
+                <label class="theme-switch" for="themeToggleCheckbox" title="Toggle Dark Mode">
+                    <input type="checkbox" id="themeToggleCheckbox">
+                    <span class="slider round">
+                        <svg class="sun-icon theme-icon h-3 w-3 sm:h-4 sm:w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-12.66l-.707.707M4.04 19.96l-.707.707M21 12h-1M4 12H3m15.96-7.96l-.707-.707M4.747 4.042l-.707-.707" />
+                        </svg>
+                        <svg class="moon-icon theme-icon h-3 w-3 sm:h-4 sm:w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </span>
+                </label>
+            </div>
+            <p>&copy; <span id="currentYear"></span> Card Game Database. All rights reserved (concept).</p>
+            <p>Glassmorphism Design.</p>
+        </footer>
+    </div>
+
+    <div id="onboardingModalOverlay" class="modal-overlay">
+        <div id="onboardingModalContent" class="modal-content glassmorphic">
+            <h2 class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center" style="color: var(--text-primary);">Create Your Account</h2>
+            <div id="onboardingStep1" class="onboarding-step active">
+                <h3 class="text-lg font-semibold mb-3 sm:mb-4" style="color: var(--text-secondary);">Step 1: Account Basics</h3>
+                <div><label for="onboardingEmail" class="block text-sm font-medium mb-1" style="color: var(--text-secondary);">Email</label><input type="email" id="onboardingEmail" class="onboarding-input text-sm sm:text-base" placeholder="you@example.com"><p id="emailError" class="error-message"></p></div>
+                <div><label for="onboardingPassword" class="block text-sm font-medium mb-1 mt-3 sm:mt-4" style="color: var(--text-secondary);">Password</label><input type="password" id="onboardingPassword" class="onboarding-input text-sm sm:text-base" placeholder="••••••••"><p id="passwordError" class="error-message"></p></div>
+                <div><label for="onboardingConfirmPassword" class="block text-sm font-medium mb-1 mt-3 sm:mt-4" style="color: var(--text-secondary);">Confirm Password</label><input type="password" id="onboardingConfirmPassword" class="onboarding-input text-sm sm:text-base" placeholder="••••••••"><p id="confirmPasswordError" class="error-message"></p></div>
+                <div class="mt-4 sm:mt-6 text-right"><button id="nextToStep2" class="onboarding-button w-full sm:w-auto text-sm sm:text-base">Next</button></div>
+            </div>
+            <div id="onboardingStep2" class="onboarding-step">
+                <h3 class="text-lg font-semibold mb-3 sm:mb-4" style="color: var(--text-secondary);">Step 2: Your Profile</h3>
+                <div><label for="onboardingUsername" class="block text-sm font-medium mb-1" style="color: var(--text-secondary);">Username</label><input type="text" id="onboardingUsername" class="onboarding-input text-sm sm:text-base" placeholder="YourCoolUsername"><p id="usernameError" class="error-message"></p></div>
+                <div class="mt-3 sm:mt-4"><label for="onboardingProfilePic" class="block text-sm font-medium mb-1" style="color: var(--text-secondary);">Profile Picture (Optional)</label><input type="file" id="onboardingProfilePic" class="onboarding-input text-sm sm:text-base" accept="image/*"><p class="text-xs mt-1" style="color: var(--text-secondary);">Conceptual: Server-side upload would be needed.</p></div>
+                <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between gap-2"><button id="backToStep1" class="onboarding-button w-full sm:w-auto text-sm sm:text-base">Back</button><button id="nextToStep3" class="onboarding-button w-full sm:w-auto text-sm sm:text-base">Next</button></div>
+            </div>
+            <div id="onboardingStep3" class="onboarding-step">
+                <h3 class="text-lg font-semibold mb-3 sm:mb-4" style="color: var(--text-secondary);">Step 3: A Little More About You</h3>
+                <div><label for="onboardingHometown" class="block text-sm font-medium mb-1" style="color: var(--text-secondary);">Hometown</label><input type="text" id="onboardingHometown" class="onboarding-input text-sm sm:text-base" placeholder="City, State/Country"></div>
+                <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between gap-2"><button id="backToStep2" class="onboarding-button w-full sm:w-auto text-sm sm:text-base">Back</button><button id="nextToStep4" class="onboarding-button w-full sm:w-auto text-sm sm:text-base">Next</button></div>
+            </div>
+            <div id="onboardingStep4" class="onboarding-step">
+                <h3 class="text-lg font-semibold mb-3 sm:mb-4" style="color: var(--text-secondary);">Step 4: Which TCGs Do You Play?</h3>
+                <div id="tcgSurveyOptions" class="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto p-2 glassmorphic rounded-lg text-sm"></div>
+                <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between gap-2"><button id="backToStep3" class="onboarding-button w-full sm:w-auto text-sm sm:text-base">Back</button><button id="finishOnboarding" class="onboarding-button w-full sm:w-auto text-sm sm:text-base">Finish Sign Up</button></div>
+            </div>
+            <button id="closeOnboardingModal" class="absolute top-2 right-2 sm:top-4 sm:right-4 text-xl sm:text-2xl" style="color: var(--text-secondary);" title="Close">&times;</button>
+        </div>
+    </div>
+
+    <div id="deckModalOverlay" class="modal-overlay">
+        <div id="deckModalContent" class="modal-content glassmorphic">
+            <h2 class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center" style="color: var(--text-primary);">Your Deck</h2>
+            <div id="deckCardList" class="mb-3 sm:mb-4 max-h-48 sm:max-h-60 overflow-y-auto space-y-2 sm:space-y-3 p-2 glassmorphic rounded-lg"><p class="text-center p-4 text-sm sm:text-base" style="color: var(--text-secondary);">Your deck is empty. Add cards from the gallery!</p></div>
+            
+            <div id="deckActions" class="mb-4 sm:mb-6">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2">
+                    <button id="downloadDeckCsv" class="onboarding-button text-xs py-1.5 px-3 w-full sm:w-auto">Download (CSV)</button>
+                    <div>
+                        <label for="importDeckCsvInput" class="onboarding-button text-xs py-1.5 px-3 cursor-pointer w-full sm:w-auto block text-center sm:inline-block">Import (CSV)</label>
+                        <input type="file" id="importDeckCsvInput" class="hidden" accept=".csv">
+                    </div>
+                </div>
+                <div id="saveDeckSection" class="hidden mt-3 sm:mt-4">
+                     <input type="text" id="deckNameInput" class="onboarding-input text-sm py-1.5" placeholder="Enter deck name...">
+                     <button id="saveCurrentDeckButton" class="onboarding-button w-full mt-2 text-sm py-1.5">Save Current Deck</button>
+                </div>
+            </div>
+
+            <div id="savedDecksSection" class="hidden">
+                <h3 class="text-md sm:text-lg font-semibold mb-2 sm:mb-3" style="color: var(--text-primary);">Saved Decks</h3>
+                <div id="savedDecksList" class="max-h-32 sm:max-h-40 overflow-y-auto space-y-2 p-2 glassmorphic rounded-lg">
+                    <p class="text-center p-2 text-xs sm:text-sm" style="color: var(--text-secondary);">No decks saved yet.</p>
+                </div>
+            </div>
+            <button id="closeDeckModal" class="absolute top-2 right-2 sm:top-4 sm:right-4 text-xl sm:text-2xl" style="color: var(--text-secondary);" title="Close">&times;</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CSV Data ( 그대로 유지 ) ---
+        const csvDataOld = `
+card_name,card_type,text,effect_syntax,image_file,max_bpm,per_slot_charge,datalyth_slots,stack_damage,generic_value,num_effects,effect_types_list,has_condition,has_timing
+Luc Loic,Actor Card,Move Luc Loic to the Stage. At the beginning of each of your turns if Luc's heart is zero you may add 100 charge to an active datalyth on your side of the Stage.,"[MOVE:SELF,STAGE]; [ADD_CHARGE:DATALYTH:SELF:ACTIVE,100?IF_HR:SELF,==,0|BEGIN_TURN]",/card_art/Actor Card: Luc Loic.PNG,170,,,,2,"ADD_CHARGE,MOVE",TRUE,TRUE
+Oslo Takk,Actor Card,Move Oslo Takk to the Stage. Following draw you may discard 1 card from your hand per turn to add 100 power to one datalyth active on the Stage per turn.,"[MOVE:SELF,STAGE]; [ADD_CHARGE:DATALYTH:ANY:ACTIVE,100?COST:DISCARD:1|AFTER_DRAW]; [ONCE_PER:TURN]",/card_art/Actor Card: Oslo Takk.PNG,150,,,,3,"ADD_CHARGE,MOVE,ONCE_PER",TRUE,TRUE
+Phoebe Moss,Actor Card,Move Phoebe Moss to the Stage. Following Draw if Phoebe was not attacked on your opponent's previous turn you may add 100 power to an active datalyth.,"[MOVE:SELF,STAGE]; [ADD_CHARGE:DATALYTH:SELF:ACTIVE,100?IF_NOT_ATTACKED:PREV_TURN|AFTER_DRAW]",/card_art/Actor Card: Phoebe Moss.PNG,150,,,,2,"ADD_CHARGE,MOVE",TRUE,TRUE
+CarbonOS Processor,Datalyth Card,Add this card to an Actor active on your side of the Stage.,"[ATTACH:SELF,ACTOR:SELF:ACTIVE]",/card_art/Datalyth Card: CarbonOS Processor.PNG,,300,3,1400,,1,ATTACH,FALSE,FALSE
+MeteorOS Processor,Datalyth Card,Add this card to an Actor active on your side of the Stage.,"[ATTACH:SELF,ACTOR:SELF:ACTIVE]",/card_art/Datalyth Card: MeteorOS Processor.PNG,,600,2,1500,,1,ATTACH,FALSE,FALSE
+PrismOS Processor,Datalyth Card,Add this card to an Actor active on your side of the Stage.,"[ATTACH:SELF,ACTOR:SELF:ACTIVE]",/card_art/Datalyth Card: PrismOS Processor.PNG,,400,2,1200,,1,ATTACH,FALSE,FALSE
+RuneOS Processor,Datalyth Card,Add this card to an Actor active on your side of the Stage.,"[ATTACH:SELF,ACTOR:SELF:ACTIVE]",/card_art/Datalyth Card: RuneOS Processor.PNG,,500,3,2000,,1,ATTACH,FALSE,FALSE
+Box Breathe,Care Card,"Box breathe for 3 cycles. Notice how you feel now. To box breathe inhale for four seconds, hold it for four seconds, and exhale for four seconds. Luc Loic says: It's common to find ourselves holding our breath. By consciously breathing we bring feelings of peace to the nervous system.","[REAL_ACTION:BOX_BREATHE,3]; [ADD_CHARGE:DATALYTH:SELF:CHOICE,100]; [QUOTE:LUC_LOIC,It's common to find ourselves holding our breath. By consciously breathing we bring feelings of peace to the nervous system.]",/card_art/Care Card: Box Breathe.PNG,,,,,100,3,"ADD_CHARGE,QUOTE,REAL_ACTION",FALSE,FALSE
+Kroma Cannon,Item Card,Until the end of your current turn one Datalyth slot of your choice gains 300 charge.,"[ADD_CHARGE:DATALYTH:SELF:CHOICE,300|DURATION:END_TURN]",/card_art/Item Card: Kroma Cannon.PNG,,,,,300,1,ADD_CHARGE,FALSE,TRUE
+Get Up & Stretch,Care Card,Get up and stretch for 15 seconds. Notice how you feel. Your opponent may join you if they wish and receive the same charge added to their datalyths. Luc Loic says: Stretching stimulates the mind and body and acts an emotional reset.,"[REAL_ACTION:STRETCH,15]; [ADD_CHARGE:DATALYTH:SELF:ALL,200]; [ADD_CHARGE:DATALYTH:OPP:ALL,200?OPP_CHOICE]; [QUOTE:LUC_LOIC,Stretching stimulates the mind and body and acts an emotional reset.]",/card_art/Care Card: Get Up & Stretch.PNG,,,,,200,4,"ADD_CHARGE,QUOTE,REAL_ACTION",TRUE,FALSE
+Notice,Care Card,Notice how you feel. Where in your body do you feel it? Increase the power of one Datalyth slot by 200 charge. Luc Loic says: Our body is incredibly wise and is constantly sending us signals about our environment and the way we feel. By paying attention we gain insight on who we are as people.,"[REAL_ACTION:NOTICE]; [ADD_CHARGE:DATALYTH:SELF:CHOICE,200]; [QUOTE:LUC_LOIC,Our body is incredibly wise and is constantly sending us signals about our environment and the way we feel. By paying attention we gain insight on who we are as people.]",/card_art/Care Card: Notice.PNG,,,,,200,3,"ADD_CHARGE,QUOTE,REAL_ACTION",FALSE,FALSE
+Trusty Tool,Care Card,"What is your trusty tool you can't journey without? Your trusty tool can be anything, like a concept, physical object, anything that makes you feel more like yourself. Luc Loic says: The best things in life are those that make us feel the most like ourselves.","[REAL_ACTION:TRUSTY_TOOL]; [ADD_CHARGE:DATALYTH:SELF:CHOICE,100]; [QUOTE:LUC_LOIC,The best things in life are those that make us feel the most like ourselves.]",/card_art/Care Card: Trusty Tool.PNG,,,,,100,3,"ADD_CHARGE,QUOTE,REAL_ACTION",FALSE,FALSE
+Beautiful Morn,Effect Card,Discard one card from your hand and at the beginning of your next turn following Draw fully charge one Datalyth slot on your side of the Stage.,"[COST:DISCARD:1]; [FULL_CHARGE:DATALYTH:SELF:CHOICE,1|BEGIN_TURN:NEXT|AFTER_DRAW]",/card_art/Effect Card: Beautiful Morn.PNG,,,,,,2,"COST,FULL_CHARGE",FALSE,TRUE
+Calamity,Effect Card,Opponent's heartrate increases by 40 bpm.,"[HR_CHANGE:OPP,+40]",/card_art/Effect Card: Calamity.PNG,,,,,40,1,HR_CHANGE,FALSE,FALSE
+Colorpunk,Effect Card,Double all charge gained this turn after this card is played. If your opponent has no Datalyth slots active on the Stage raise their heartrate by 20 bpm.,"[MODIFY_CHARGE:GAIN,DOUBLE|DURATION:TURN]; [HR_CHANGE:OPP,+20?IF_COUNT:DATALYTH:OPP:ACTIVE,==,0]",/card_art/Effect Card: Colorpunk.PNG,,,,,20,2,"HR_CHANGE,MODIFY_CHARGE",TRUE,TRUE
+Cosm,Effect Card,Your opponent may not activate Script cards during your current turn. Lower your heartrate by 20 bpm.,"[PREVENT:SCRIPT,TURN|TARGET:OPP]; [HR_CHANGE:SELF,-20]",/card_art/Effect Card: Cosm.PNG,,,,,20,2,"HR_CHANGE,PREVENT",FALSE,TRUE
+Cosmic Hope II,Effect Card,Double the charge added by one Care Card of your selection activated on your current turn following the activation of this card.,"[MODIFY_CHARGE:CARE_CARD:SELF:CHOICE,DOUBLE|DURATION:TURN]",/card_art/Effect Card: Cosmic Hope II.PNG,,,,,,1,MODIFY_CHARGE,FALSE,TRUE
+Cosmic Hope,Effect Card,Double the charge added by one Care Card of your selection activated on your current turn following the activation of this card.,"[MODIFY_CHARGE:CARE_CARD:SELF:CHOICE,DOUBLE|DURATION:TURN]",/card_art/Effect Card: Cosmic Hope.PNG,,,,,,1,MODIFY_CHARGE,FALSE,TRUE
+Cosmic Swing,Effect Card,If you lost Datalyth charge as the result of an attack on your opponent's last turns deduct the total amount lost on their turn from a Datalyth active on their side of the Stage.,"[REMOVE_CHARGE:DATALYTH:OPP:ACTIVE,LAST_LOST?IF_LOST_CHARGE:ATTACK:PREV_TURN]",/card_art/Effect Card: Cosmic Swing.PNG,,,,,,1,REMOVE_CHARGE,TRUE,FALSE
+Crystal Breath,Effect Card,At the end of your turn double the effects of one Care card that adds power to an active datalyth on your side of the Stage.,"[MODIFY_CHARGE:CARE_CARD:SELF:CHOICE,DOUBLE|END_TURN]",/card_art/Effect Card: Crystal Breath.PNG,,,,,,1,MODIFY_CHARGE,FALSE,TRUE
+Cursed Contract,Effect Card,Activate this card directly following Draw. Discard your entire hand and end your turn immediately.,"[DISCARD:HAND:SELF:ALL|AFTER_DRAW]; [END_TURN]",/card_art/Effect Card: Cursed Contract.PNG,,,,,600,2,"DISCARD,END_TURN",FALSE,TRUE
+Desparate Plea,Effect Card,If your heartrate is above 50% capacity draw two cards. Your opponent may not attack on their next turn.,"[DRAW:2?IF_HR:SELF,>,50%]; [PREVENT:ATTACK,1|TARGET:OPP]",/card_art/Effect Card: Desparate Plea.PNG,,,,,,2,"DRAW,PREVENT",TRUE,TRUE
+Dimension Release,Effect Card,Show your opponent all Datalyth cards in your hand. For every Datalyth card in your hand fully charge one datalyth slot on the Stage.,"[REVEAL:HAND:SELF:DATALYTH]; [FULL_CHARGE:DATALYTH:SELF:CHOICE,COUNT:HAND:SELF:DATALYTH]",/card_art/Effect Card: Dimension Release.PNG,,,,,,2,"FULL_CHARGE,REVEAL",FALSE,FALSE
+Divine Consciousness,Effect Card,"If your heartrate is above 50% capacity, fully charge up to 2 Datalyth slots of your selection. This card may only be used once per player per game.","[FULL_CHARGE:DATALYTH:SELF:CHOICE,2?IF_HR:SELF,>,50%]; [ONCE_PER:GAME]",/card_art/Effect Card: Divine Consciousness.PNG,,,,,,2,"FULL_CHARGE,ONCE_PER",TRUE,FALSE
+Dream Tree,Effect Card,Search your Deck and add one Supporter card of your selection to your hand. Then shuffle your Deck.,"[SEARCH:DECK,SUPPORTER:CHOICE,1,HAND]; [SHUFFLE:DECK]",/card_art/Effect Card: Dream Tree.PNG,,,,,,2,"SEARCH,SHUFFLE",FALSE,FALSE
+Fallen Angel,Effect Card,"If your opponent declared an attack that removed all charge from your Datalyth on their last turn, add 300 charge to a Datalyth slot on your side of the Stage.","[ADD_CHARGE:DATALYTH:SELF:CHOICE,300?IF_REMOVED_ALL:DATALYTH:SELF:ATTACK:PREV_TURN]",/card_art/Effect Card: Fallen Angel.PNG,,,,,300,1,ADD_CHARGE,TRUE,FALSE
+Fount of Blessing,Effect Card,"If your heartrate is elevated, return it to zero. If your heartrate is already zero, fully charge any one Datalyth slot active on the Stage of your selection.","[HR_RESET:SELF?IF_HR:SELF,>,0]; [FULL_CHARGE:DATALYTH:ANY:ACTIVE:CHOICE,1?IF_HR:SELF,==,0]",/card_art/Effect Card: Font of Blessing.PNG,,,,,,2,"FULL_CHARGE,HR_RESET",TRUE,FALSE
+Goddess of Peace,Effect Card,"For three turns add 200 charge to an active Datalyth on your side of the Stage on the condition that you do not attack, then discard this card.","[ADD_CHARGE:DATALYTH:SELF:ACTIVE,200|DURATION:3?IF_NOT:ATTACK]; [DISCARD:SELF|AFTER:DURATION]",/card_art/Effect Card: Goddess of Peace.PNG,,,,,200,2,"ADD_CHARGE,DISCARD",TRUE,TRUE
+Pyramid Power,Effect Card,Discard one card from your hand to add 200 power to one Datalyth slot on your side of the Stage during end of your current turn.,"[ADD_CHARGE:DATALYTH:SELF:CHOICE,200?COST:DISCARD:1|END_TURN]",/card_art/Effect Card: Pyramid Power.PNG,,,,,200,1,ADD_CHARGE,TRUE,TRUE
+Lyth Exchange,Effect Card,"Select a Datalyth slot active on your side of the Stage. Lower your heartrate by 10 bpm for each 100 charge you remove, then discard this card.","[HR_CHANGE:SELF,-10*REMOVE_CHARGE:DATALYTH:SELF:ACTIVE:CHOICE,100]; [DISCARD:SELF]",/card_art/Effect Card: Lyth Exchange.PNG,,,,,10,2,"DISCARD,HR_CHANGE",FALSE,FALSE
+Perfect Alignment,Effect Card,Select one Datalyth on your side of the Stage with less than 200 total charge. Add 200 charge to a Datalyth slot on your side of the Stage.,"[ADD_CHARGE:DATALYTH:SELF:CHOICE,200?IF_CHARGE:DATALYTH:SELF:CHOICE,<,200]",/card_art/Effect Card: Perfect Alignment.PNG,,,,,200,1,ADD_CHARGE,TRUE,FALSE
+Pure Illusion,Effect Card,"Select one Datalyth with less than 300 total charge on your side of the Stage. During the turn this card is activated if this Datalyth declares an attack, remove all charge from its target.","[SELECT:DATALYTH:SELF:CHOICE?IF_CHARGE:DATALYTH:SELF:CHOICE,<,300]; [REMOVE_CHARGE:TARGET:ATTACK,ALL|DURATION:TURN]",/card_art/Effect Card: Pure Illusion.PNG,,,,,,2,"REMOVE_CHARGE,SELECT",TRUE,TRUE
+Hacker,Effect Card,Select one of your opponent's Datalyth slots and remove all charge from it. If your opponent has no active Datalyth slots their heartrate increases by 20 bpm.,"[REMOVE_CHARGE:DATALYTH:OPP:CHOICE,ALL]; [HR_CHANGE:OPP,+20?IF_COUNT:DATALYTH:OPP:ACTIVE,==,0]",/card_art/Effect Card: Hacker.PNG,,,,,20,2,"HR_CHANGE,REMOVE_CHARGE",TRUE,FALSE
+Release,Effect Card,Heartrate returns to zero.,"[HR_RESET:SELF]",/card_art/Effect Card: Release.PNG,,,,,,1,HR_RESET,FALSE,FALSE
+Shiva,Effect Card,If your opponent has 2 or more Datalyths slots active on the Stage remove all charge from 1 slot of your selection.,"[REMOVE_CHARGE:DATALYTH:OPP:CHOICE,ALL?IF_COUNT:DATALYTH:OPP:ACTIVE,>=,2]",/card_art/Effect Card: Shiva.PNG,,,,,,1,REMOVE_CHARGE,TRUE,FALSE
+Spacewalk,Effect Card,Activate this card following an opponent's turn on which you were not attacked or received no damage.,"[ADD_CHARGE:DATALYTH:SELF:CHOICE,300?IF_NOT_ATTACKED:PREV_TURN]",/card_art/Effect Card: Soacewalk.PNG,,,,,300,1,ADD_CHARGE,TRUE,FALSE
+The Visitor,Effect Card,Activate this card directly following Draw. Your opponent must show your their hand and discard one card of your selection. Following this card's activation your turn ends immediately.,"[REVEAL:HAND:OPP:ALL|AFTER_DRAW]; [DISCARD:HAND:OPP:CHOICE,1]; [END_TURN]",/card_art/Effect Card: The Visitor.PNG,,,,,,3,"DISCARD,END_TURN,REVEAL",FALSE,TRUE
+Triumphant Heroine,Effect Card,You take no damage to your datalyths or elevation to your heartrate your during your opponent's next turn.,"[PREVENT:DAMAGE,1|TARGET:DATALYTH:SELF:ALL]; [HR_PROTECT:SELF,1]",/card_art/Effect Card: Triumphant Heroine.PNG,,,,,,2,"HR_PROTECT,PREVENT",FALSE,TRUE
+Twin Fish,Effect Card,Choose one previously activated Effect card from your opponent's Source and add it to your hand. Once activated return it to your opponent's Source.,"[COPY:CARD:SOURCE:OPP:EFFECT:CHOICE,HAND]; [RETURN:SELF,SOURCE:OPP|AFTER_PLAY]",/card_art/Effect Card: Twin Fish.PNG,,,,,,2,"COPY,RETURN",FALSE,TRUE
+Caffiene Injection,Item Card,Your heartrate is increased by 50 bpm during your opponent's next 3 turns.,"[HR_CHANGE:SELF,+50|DURATION:3:OPP_TURN]",/card_art/Item Card: Caffiene Injection.PNG,,,,,50,1,HR_CHANGE,FALSE,TRUE
+Carbon Canister,Item Card,Reduce the number of Datalyth slots necessary to achieve stack damage by 1 for the duration of your current turn.,"[STACK_REQ:-1|DURATION:TURN]",/card_art/Item Card: Carbon Canister.PNG,,,,,,1,STACK_REQ,FALSE,TRUE
+Carbon Keys,Item Card,"Search your Deck for one Processor card of your choice, add it to your hand, then shuffle your deck.","[SEARCH:DECK,DATALYTH:CHOICE,1,HAND]; [SHUFFLE:DECK]",/card_art/Item Card: Carbon Keys.PNG,,,,,,2,"SEARCH,SHUFFLE",FALSE,FALSE
+Dreampod,Item Card,"Select one Actor on your side of the Stage with an active Supporter. For three rounds that actor's heartrate is unaffected by attacks and the impact of Effect cards, then discard both cards.","[HR_PROTECT:ACTOR:SELF:CHOICE,3?IF_HAS:ACTOR:SELF:CHOICE,SUPPORTER]; [DISCARD:SELF|AFTER:DURATION]; [DISCARD:SUPPORTER:ATTACHED|AFTER:DURATION]",/card_art/Item Card: Dreampod.PNG,,,,,,3,"DISCARD,HR_PROTECT",TRUE,TRUE
+Kroma Projectile,Item Card,Reduce the number of Datalyth slots necessary to achieve stack damage by 1 for the duration of your current turn.,"[STACK_REQ:-1|DURATION:TURN]",/card_art/Item Card: Kroma Projectile.PNG,,,,,,1,STACK_REQ,FALSE,TRUE
+Kroma Strike,Item Card,Play this card after successfully removing all charge from an opponent's Datalyth as the result of an attack on your previous turn. Draw 1 card from your Deck.,"[DRAW:1?IF_REMOVED_ALL:DATALYTH:OPP:ATTACK:PREV_TURN]",/card_art/Item Card: Kroma Strike.PNG,,,,,,1,DRAW,TRUE,FALSE
+Vasodillator,Item Card,"When played, immediately reduce your Actor's heartrate by 30 bpm. This card remains in play for 3 turns, reducing your heartrate by 10 bpm at the beginning of each of your turns.","[HR_CHANGE:SELF,-30|ON_PLAY]; [HR_CHANGE:SELF,-10|BEGIN_TURN|DURATION:3]; [DISCARD:SELF|AFTER:DURATION]",/card_art/Item Card: Vasodillator.PNG,,,,,30,3,"DISCARD,HR_CHANGE",FALSE,TRUE
+Vivifier,Item Card,Fully charge one Datalyth slot on your side of the Stage at the end of your curent turn.,"[FULL_CHARGE:DATALYTH:SELF:CHOICE,1|END_TURN]",/card_art/Item Card: Vivifier.PNG,,,,,50,1,FULL_CHARGE,FALSE,TRUE
+Rainbowen,Lumiverse Card,"When played, all players must take a moment to appreciate the colors around them. Add 100 charge to each of your Datalyths and reduce your heartrate by 20 bpm.","[REAL_ACTION:APPRECIATE_COLORS]; [ADD_CHARGE:DATALYTH:SELF:ALL,100]; [HR_CHANGE:SELF,-20]",/card_art/Lumiverse Card: Rainbowen.PNG,,,,,100,3,"ADD_CHARGE,HR_CHANGE,REAL_ACTION",FALSE,FALSE
+Envision,Mind Card,"Close your eyes and envision your next move. Look at the top 3 cards of your deck, rearrange them in any order, then place them back on top of your deck.","[REAL_ACTION:CLOSE_EYES]; [VIEW:DECK:TOP,3]; [ARRANGE:DECK:TOP,3]",/card_art/Mind Card: Envision.PNG,,,,,3,"ARRANGE,REAL_ACTION,VIEW",FALSE,FALSE
+Hand of Destiny,Response Card,Play this card immediately when your opponent declares an attack. Negate that attack and add 200 charge to one of your Datalyths.,"[NEGATE:ATTACK|ON_ATTACK:OPP]; [ADD_CHARGE:DATALYTH:SELF:CHOICE,200]",/card_art/Response Card: Hand of Destiny.PNG,,,,,200,2,"ADD_CHARGE,NEGATE",FALSE,TRUE
+Code Injection,Script Card,"Place face down on the Stage. Activate during your turn to add 300 charge to one of your Datalyths. If your opponent has no active Datalyths, their heartrate increases by 20 bpm.","[PLACE:SELF,STAGE:FACEDOWN]; [ADD_CHARGE:DATALYTH:SELF:CHOICE,300|ON_ACTIVATE]; [HR_CHANGE:OPP,+20?IF_COUNT:DATALYTH:OPP:ACTIVE,==,0|ON_ACTIVATE]",/card_art/Script Card: Code Injection.PNG,,,,,300,3,"ADD_CHARGE,HR_CHANGE,PLACE",TRUE,TRUE
+Cost of Operation,Script Card,Place face down on the Stage. Activate when your opponent declares an attack to reduce the damage by 50%. Your heartrate increases by 10 bpm.,"[PLACE:SELF,STAGE:FACEDOWN]; [REDUCE_DMG:50%|ON_ATTACK:OPP|ON_ACTIVATE]; [HR_CHANGE:SELF,+10|ON_ACTIVATE]",/card_art/Script Card: Cost of Operation.PNG,,,,,,3,"HR_CHANGE,PLACE,REDUCE_DMG",FALSE,TRUE
+Data Drought,Script Card,Activate this card when your opponent activates a card that would add charge to an active Datalyth. Negate its effect.,"[NEGATE:EFFECT:ADD_CHARGE|ON_EFFECT:ADD_CHARGE:OPP]",/card_art/Script Card: Data Drought.PNG,,,,,,1,NEGATE,FALSE,TRUE
+Data Irrigation,Script Card,Add 100 charge to every Datalyth slot active on your side of the Stage with at least 100 charge currently active.,"[ADD_CHARGE:DATALYTH:SELF:ACTIVE,100?IF_CHARGE:DATALYTH:SELF:ACTIVE,>=,100]",/card_art/Script Card: Data Irrigation.PNG,,,,,,1,ADD_CHARGE,TRUE,FALSE
+Honey Jar,Script Card,Activate this card when your opponent declares an attack. Negate the attack and raise your opponent's heartrate by 20 bpm.,"[NEGATE:ATTACK|ON_ATTACK:OPP]; [HR_CHANGE:OPP,+20]",/card_art/Script Card: Honey Jar.PNG,,,,,400,2,"HR_CHANGE,NEGATE",FALSE,TRUE
+Instant Transfer,Script Card,Activate this card when an opponent declares an attack. Negate the attack and add an equal amount of charge active in the attack to a Datalyth card of your choice active on the Stage.,"[NEGATE:ATTACK|ON_ATTACK:OPP]; [ADD_CHARGE:DATALYTH:SELF:CHOICE,ATTACK_CHARGE]",/card_art/Script Card: Instant Transfer.PNG,,,,,,2,"ADD_CHARGE,NEGATE",FALSE,TRUE
+Perspective Shift,Script Card,Activate this card when an opponent declares an attack. Negate the attack and lower your heartrate by 10bpm for each 100 charge active in the attack.,"[NEGATE:ATTACK|ON_ATTACK:OPP]; [HR_CHANGE:SELF,-10*ATTACK_CHARGE/100]",/card_art/Script Card: Perspective Shift.PNG,,,,,,2,"HR_CHANGE,NEGATE",FALSE,TRUE
+Surge Protector,Script Card,Activate this card when your opponent has an active Datalyth on the Stage with a total of more than 500 charge. Remove all charge from the Datalyth and return it to your opponent's hand.,"[REMOVE_CHARGE:DATALYTH:OPP:CHOICE,ALL?IF_CHARGE:DATALYTH:OPP:CHOICE,>,500]; [RETURN:DATALYTH:OPP:CHOICE,HAND]",/card_art/Script Card: Surge Protector.PNG,,,,,,2,"REMOVE_CHARGE,RETURN",TRUE,FALSE
+Ascended Seraph,Supporter Card,Move Seraph to the Stage and begin to support any Actor there. Double the damage done by your datalyths for three turns then discard this card.,"[MOVE:SELF,STAGE]; [ATTACH:SELF,ACTOR:SELF:CHOICE]; [MODIFY_DAMAGE:DATALYTH:SELF:ALL,DOUBLE|DURATION:3]; [DISCARD:SELF|AFTER:DURATION]",/card_art/Supporter Card: Ascended Seraph.PNG,,,,,100,4,"ATTACH,DISCARD,MODIFY_DAMAGE,MOVE",FALSE,TRUE
+Bunny Tanks,Supporter Card,"When your opponent declares an attack on one of your datalyths negate that attack. This effect may be used twice, then this card is discarded.",[NEGATE:ATTACK|ON_ATTACK:DATALYTH:SELF|USES:2]; [DISCARD:SELF|AFTER:USES],/card_art/Supporter Card: Bunny Tanks.PNG,,,,,,2,"DISCARD,NEGATE",FALSE,TRUE
+Cosmic Panda,Supporter Card,"Attach to an Actor on your side of the Stage. Once per turn, you may discard a card to add 150 charge to one of your Datalyths.","[ATTACH:SELF,ACTOR:SELF:CHOICE]; [ADD_CHARGE:DATALYTH:SELF:CHOICE,150?COST:DISCARD:1]; [ONCE_PER:TURN]",/card_art/Supporter Card: Cosmic Panda.PNG,,,,,150,3,"ADD_CHARGE,ATTACH,ONCE_PER",TRUE,FALSE
+Cosmic Whale,Supporter Card,Move Cosmic Whale to the Stage and begin to support any Actor there. For three of your opponent's turns your heartrate remains unchanged. After three turns discard this card.,"[MOVE:SELF,STAGE]; [ATTACH:SELF,ACTOR:SELF:CHOICE]; [HR_PROTECT:SELF,3:OPP_TURN]; [DISCARD:SELF|AFTER:DURATION]",/card_art/Supporter Card: Cosmic Whale.PNG,,,,,50,4,"ATTACH,DISCARD,HR_PROTECT,MOVE",FALSE,TRUE
+Glaussiere Io,Supporter Card,Move Glaussiere to the Stage and begin to support any Actor there. At the beginning of each of your turns add 100 power to a datalyth active on your side of the stage (if any).,"[MOVE:SELF,STAGE]; [ATTACH:SELF,ACTOR:SELF:CHOICE]; [ADD_CHARGE:DATALYTH:SELF:ACTIVE:CHOICE,100|BEGIN_TURN]",/card_art/Supporter Card: Glaussiere Io.PNG,,,,,,3,"ADD_CHARGE,ATTACH,MOVE",FALSE,TRUE
+Hue Io,Supporter Card,Move Hue to the Stage and begin to support any Actor there. At the beginning of each of your turns add 100 power to a datalyth active on your side of the stage (if any).,"[MOVE:SELF,STAGE]; [ATTACH:SELF,ACTOR:SELF:CHOICE]; [ADD_CHARGE:DATALYTH:SELF:ACTIVE:CHOICE,100|BEGIN_TURN]",/card_art/Supporter Card: Hue Io.PNG,,,,,,3,"ADD_CHARGE,ATTACH,MOVE",FALSE,TRUE
+Seraph,Supporter Card,Move Seraph to the Stage and begin to support any Actor there. Double the charge gained by your datalyths for three turns then discard this card.,"[MOVE:SELF,STAGE]; [ATTACH:SELF,ACTOR:SELF:CHOICE]; [MODIFY_CHARGE:GAIN:DATALYTH:SELF:ALL,DOUBLE|DURATION:3]; [DISCARD:SELF|AFTER:DURATION]",/card_art/Supporter Card: Seraph.PNG,,,,,20,4,"ATTACH,DISCARD,MODIFY_CHARGE,MOVE",FALSE,TRUE
+`;
+        const csvDataWithImageLinks = `
+image,label,item-count,item-key
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/ab44d36b-d3d9-49c7-9840-5b15de6956d0.jpeg?alt=media&token=24ef31b9-1553-4b58-8a45-fd216c89d781,Actor Card: Luc Loic.jpeg,0,type-a068b72c-a6c8-4e21-824d-027d6be4ae12
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/dbe0691e-d17a-4209-a507-21a1218074c4.jpeg?alt=media&token=c1bb83d4-4755-416b-8d59-e40c6e8dfcbd,Actor Card: Oslo Takk.jpeg,0,type-794f02fb-4ac7-46cc-aee1-69d98991b897
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/4c8510e6-8991-40ca-ac09-ff2dbfb2e7fd.jpeg?alt=media&token=0a986fdc-95e2-4e6a-af2d-ded529164b80,Actor Card: Phoebe Moss.jpeg,0,type-112e891e-900b-4f15-a71e-bc25174c5b13
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/086c6d36-3d50-4680-b62e-8772868c3a63.jpeg?alt=media&token=37b34784-6a4a-4c6e-bb9e-4708f9561777,Card Back.jpeg,0,type-3b4a9a8e-8779-48a8-b1db-dd28bb7ae336
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/59fc09d0-3c11-4a17-afbd-58dca78f65a3.jpeg?alt=media&token=6fed9b8d-cf85-4f1d-9e87-05af4308a96b,Care Card: Box Breathe.jpeg,3,type-cbfcf4bd-42eb-4737-90e6-ea81088818d3
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/dde29d37-862c-49a1-82c1-c3aa84fdc469.jpeg?alt=media&token=def02933-545b-4659-850c-dab098fe87b3,Care Card: Get Up & Stretch.jpeg,3,type-d8bb7eb7-1cf6-4af9-a101-ae7beccb751d
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/e82306d7-f36a-41ea-8362-f4c5236ab6b2.jpeg?alt=media&token=1fab3b00-705f-4e23-b95c-e9b9a8fa5d95,Care Card: Notice.jpeg,3,type-b2aed5c7-abee-4f87-afc9-6e24546652c7
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/c30bb886-eeda-4ef5-8a15-9402bdacd9c4.jpeg?alt=media&token=fbb209ad-c9d2-4e53-aa12-8562d5792e11,Care Card: Trusty Tool.jpeg,2,type-e9f39229-743c-4174-95bf-26e36624b295
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/62a25e42-c296-488c-b693-f996f4c24d5f.jpeg?alt=media&token=5ed7105c-0d6b-4608-8c87-2604c63fcdf7,Datalyth Card: CarbonOS Processor.jpeg,0,type-acf856b4-bdc1-4134-967d-9b9f1af75a55
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/dfc4a696-868c-4f59-b9e8-e3baf3474bbc.jpeg?alt=media&token=b60b279d-4914-4fc8-95b4-d835dcd344a8,Datalyth Card: MeteorOS Processor.jpeg,0,type-db748334-312e-4568-bc21-ef1595619440
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/314750b6-1510-4d4e-bba6-a3bc88351256.jpeg?alt=media&token=0c57c33a-8510-4444-9b67-aa9a9fa4e3e2,Datalyth Card: PrismOS Processor.jpeg,0,type-759a90bc-8b58-4adf-8ed0-e42ef252a6c0
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/2e2bccce-8781-4dff-a59c-43d9c2dcb82a.jpeg?alt=media&token=138c2f21-dad6-4f11-a7d0-a6c89f5b39e3,Datalyth Card: RuneOS Processor.jpeg,12,type-8c0cb5a6-f7ad-4efd-91f8-f723e9c7b7f3
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/b44b3343-7719-4beb-ba7b-31b9eb4b8d8e.jpeg?alt=media&token=a6032c1a-f824-480d-9616-98487889c4d1,Effect Card: Beautiful Morn.jpeg,0,type-dc6a602e-c324-42b2-8469-5db0e236e03d
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/6d7ed577-f089-4685-bad3-6cae3b2faca9.jpeg?alt=media&token=b1cbff5c-3f42-45ef-b64e-f89211951495,Effect Card: Calamity.jpeg,1,type-b374bb5e-af06-450a-8c8c-65d04a114716
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/1b8bf500-88c6-41e6-8738-89df23565830.jpeg?alt=media&token=a8340238-d26f-4a33-9a91-d89980ba5028,Effect Card: Colorpunk.jpeg,0,type-af0a715d-f011-4709-a088-027888b6b562
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/8ec86a65-d84c-4283-ac12-5610289f25b9.jpeg?alt=media&token=50436eae-b5ff-4a52-8b5d-82f4e6cd8903,Effect Card: Cosm.jpeg,0,type-f89057a4-ae7a-42ea-9bcc-5a0895761cd9
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/b5744528-8069-40c4-8ed6-b048f2bb32d7.jpeg?alt=media&token=5b6e5b52-df44-4cce-a081-6b063c64654e,Effect Card: Cosmic Hope II.jpeg,1,type-8eb2428c-08c5-49ff-888f-d65126476466
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/ec0e6cb3-4de5-4d95-90aa-d537091023e4.jpeg?alt=media&token=cc734fb7-0ea4-4b75-ab4a-b6fa26d3e0e2,Effect Card: Cosmic Hope.jpeg,0,type-c674b436-e4a8-45a1-b737-a110e163a4db
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/0524dd93-de82-40aa-8857-5d8ec3da030b.jpeg?alt=media&token=ece04e5b-148b-41c4-afe6-a7920ece32bb,Effect Card: Cosmic Swing.jpeg,1,type-48521f38-6222-4bc4-8946-a6fe2561c079
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/31e40504-ed03-4cc5-b8b3-395895d97d9d.jpeg?alt=media&token=cca0d6e4-4d29-4401-a84d-e702dbdd3520,Effect Card: Crystal Breath.jpeg,0,type-d3cbf454-d506-43bd-a6c2-0445d8b9f022
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/aa41e3ef-dc42-4c9f-b249-0122dc311501.jpeg?alt=media&token=f5e62b7e-db0f-49a4-b3a8-8e77923a4bb0,Effect Card: Cursed Contract.jpeg,0,type-580a03d6-df7b-4e5e-89cb-fe0147ecfe25
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/ce6616fb-cd95-4c52-b59f-a6c595fb9adf.jpeg?alt=media&token=58024d40-9bf7-4be4-98ee-6423e4b25df4,Effect Card: Desparate Plea.jpeg,0,type-3fa5cba8-f7d9-4278-a16a-6c12170c4fd7
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/90c4de7f-c3aa-4532-abd4-c71e49b65a8e.jpeg?alt=media&token=ae7b4783-19dc-4afb-8609-eebb4de1638e,Effect Card: Dimension Release.jpeg,1,type-c21ac6b5-b7a8-40e8-a0a4-82808f20b423
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/4acd8d1c-9902-4be5-9e23-ba95d3b0b70a.jpeg?alt=media&token=e1e14aaf-01cb-486b-a1b0-729086117d0b,Effect Card: Divine Consciousness.jpeg,1,type-487e0112-32ad-4d1a-bf3f-47a10aa122ab
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/40d852cf-6abd-42df-a174-a6f65b093a28.jpeg?alt=media&token=0f4bff5f-0f09-4ecf-8b99-97262d11a47b,Effect Card: Dream Tree.jpeg,0,type-b968ed7f-6ff1-4f42-b81b-42a0c77480a5
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/ebb57118-025c-406f-8e7f-d09df777e67d.jpeg?alt=media&token=681e1b2f-425e-4537-af65-5ff9b0664867,Effect Card: Fallen Angel.jpeg,0,type-143a027d-018e-4c3b-8fa4-26959223dbbd
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/f75f6e04-d865-47a8-8e8a-ec138615db8b.jpeg?alt=media&token=a484736d-6af5-4212-8238-08a7ba1f94c1,Effect Card: Font of Blessing.jpeg,2,type-ccf8174a-04ad-4d29-a465-906922064e1b
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/b2ba082a-1439-4dd7-81e0-224889775ab8.jpeg?alt=media&token=b620c769-4241-4bcd-8619-4bdf6e8663ec,Effect Card: Goddess of Peace.jpeg,0,type-b717df12-67cc-4135-8ec9-c44e91402128
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/f12d6279-fb1a-43f7-9190-aa375f03adfc.jpeg?alt=media&token=2fccefd7-ae33-4760-b86c-d88b01c426c2,Effect Card: Hacker.jpeg,0,type-8270e084-7d39-4763-b31a-b0754fcb84ed
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/c99758d7-e1a6-4621-bce3-f6460cff694d.jpeg?alt=media&token=d8bbbd3f-b297-4106-8236-fbedbdba60b7,Effect Card: Lyth Exchange.jpeg,0,type-23d8214f-28cc-4498-9707-5c277c03e9b9
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/32003e9b-0eff-4edb-996e-cdb1603d3891.jpeg?alt=media&token=689c6b7e-87fd-43c8-a725-bd03200311cb,Effect Card: Perfect Alignment.jpeg,0,type-907359e0-82b4-434f-bc34-591b7b2e2c01
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/659a3ef2-1089-407b-b4e6-89791b35f30e.jpeg?alt=media&token=c473eb81-0a44-4825-9d8e-e9f10a5d0f2b,Effect Card: Pure Illusion.jpeg,0,type-2305317a-6037-4e9c-bd43-95d2390d2cd9
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/73763432-6bfe-4ed1-a472-45043e3e2fdf.jpeg?alt=media&token=802307b1-f6eb-4268-9b08-f0a729ce407e,Effect Card: Pyramid Power.jpeg,2,type-90020098-9aa2-4608-99bf-3f7d74dd348c
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/a6586f2a-916f-4a6f-abb2-446602a3b9f8.jpeg?alt=media&token=2261c6a1-c2e0-4daf-99ae-db23c81e777d,Effect Card: Release.jpeg,2,type-7869e511-d01d-4b05-b8c9-8768e5e02eb6
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/b240157b-6c38-40bc-b44b-a2486d3d6d68.jpeg?alt=media&token=2632fe8b-fc9c-4220-b409-fd5cd621d4f7,Effect Card: Shiva.jpeg,0,type-c3aa2ede-0d53-4f72-b103-b519d4557281
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/c44a4fdc-baf1-4436-b96c-03e8147107cd.jpeg?alt=media&token=149acb40-ff5f-443a-a45a-770f5541fad1,Effect Card: Soacewalk.jpeg,0,type-a4ec7dab-55a5-449a-89aa-06ff4e87b883
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/22ffa00d-9a0b-48e7-97bd-686b16705082.jpeg?alt=media&token=9d7a0fce-920f-4cf0-940c-c7496f2460a3,Effect Card: The Visitor.jpeg,0,type-08b331a2-5457-4c48-bfac-b1104cb28c23
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/a0d30713-0970-402e-86f7-93ca0494bb8a.jpeg?alt=media&token=f03d10a7-b948-4bda-bb9d-4ac7c30179cb,Effect Card: Triumphant Heroine.jpeg,2,type-360159a6-fee7-4b83-8f34-710d9c078612
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/7f09548d-9b8f-4b4b-aebf-40811434e91d.jpeg?alt=media&token=7bcf6d20-6519-48e6-819b-72d93f1a211e,Effect Card: Twin Fish.jpeg,0,type-af6a5360-7a6d-4218-b757-6f3af9dad222
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/678dd7e9-aade-44ca-b589-7a273133993f.jpeg?alt=media&token=3f35a4c0-c15c-436c-9ccb-ea53a149095d,Item Card: Caffiene Injection.jpeg,0,type-e2d0912b-702a-4a8d-8b2a-655c74815468
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/1db086ab-0dc9-472c-aa7a-97e8fb28665a.jpeg?alt=media&token=aa95185d-ad1f-422a-9138-c5f9a96589e8,Item Card: Carbon Canister.jpeg,0,type-8668c55a-618f-498d-8301-a8c09fc0aef9
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/810827a9-4c29-4d03-b95e-66735916bd30.jpeg?alt=media&token=d232f022-6c6c-4236-bfb0-8ea32e614547,Item Card: Carbon Keys.jpeg,0,type-3c74b129-6ae0-442c-9b2d-a682ce91e6b1
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/fefdb4ef-23a7-428f-811d-37ad82668cd3.jpeg?alt=media&token=75bf484d-a4d4-43cf-b452-3fab42a69a71,Item Card: Dreampod.jpeg,0,type-e9d17728-bb61-4d68-812e-a8f50e6434c5
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/a680ab01-d6d7-465e-8d86-d22343c006fe.jpeg?alt=media&token=72b7ba9b-e867-431d-856d-1df133970e6a,Item Card: Kroma Cannon.jpeg,0,type-e4e947b6-adf2-48a8-9d23-8c6919f62b75
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/315930f9-01d8-4bff-9619-9088b3a7661a.jpeg?alt=media&token=086a280f-db99-4de5-b6e6-d728456ece8b,Item Card: Kroma Projectile.jpeg,0,type-ee1a9e65-cc9c-4cda-8b03-c838f25ce3b7
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/b6a2ec45-bf69-4463-9653-99983d133a43.jpeg?alt=media&token=57f58826-6c49-48a0-88f7-88f18febea25,Item Card: Kroma Strike.jpeg,0,type-4900fe90-6ed0-43f3-86ad-a4f159e739d6
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/f89fcb9a-7290-4d30-bcc0-5f8539122822.jpeg?alt=media&token=7477a39d-b979-48e6-92c6-b7c8d9de5cb6,Item Card: Vasodillator.jpeg,1,type-4db9b947-7f3b-455a-8e3c-e5d62ed55a52
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/f5464bf1-178c-4d9b-b4e0-1113afaee56d.jpeg?alt=media&token=212e16ae-2849-495e-9e6b-6f6d92070083,Item Card: Vivifier.jpeg,1,type-1efa3797-7bde-4501-87ea-b1e5c8a7a653
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/10e55cdc-2b46-4b5d-8b69-3d353482ab09.jpeg?alt=media&token=9db40589-d266-4530-99d9-8b39d24de99b,Lumiverse Card: Rainbowen.jpeg,0,type-ef1fd1d8-3794-4511-91d7-d9481851fd12
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/c643674c-0433-42c3-96a5-0985197a2ffd.jpeg?alt=media&token=e3d5f52b-bb82-4272-84eb-f05319ca419f,Mind Card: Envision.jpeg,2,type-d6eab748-ede4-4d16-90d5-2c2416928812
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/5f932d98-8230-47b0-a854-be7d68886411.jpeg?alt=media&token=088310a8-cd54-46ef-ac29-f1cfd0d0a555,Response Card: Hand of Destiny.jpeg,0,type-f7fc8afe-af28-4750-bd7d-a898b0d832ca
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/dee0b7fe-b923-4d69-bdf6-6a34deacfec8.jpeg?alt=media&token=9f23d716-19f5-413d-b363-d7bc96a18407,Script Card: Code Injection.jpeg,1,type-d2acf4d0-789f-49cf-b8fa-8d1c572fa8de
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/0ce37ba1-fd04-4c13-a41e-7c8a76d1be67.jpeg?alt=media&token=b620050b-5f58-48b5-ac1b-dc360188476c,Script Card: Cost of Operation.jpeg,1,type-77c3c1d1-7b92-4acb-a24d-49abfd1ad146
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/f146cd36-4814-4e68-ab3b-05508c10f3c8.jpeg?alt=media&token=f76b490b-ffef-4797-86b4-7fad0bb981ef,Script Card: Data Drought.jpeg,0,type-13fce84d-8b3d-4535-876a-61257f59514b
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/f81ce407-1143-4860-ac45-6e09b0cf56a2.jpeg?alt=media&token=ad7c23c4-14a1-4dcd-9af7-003dcef75529,Script Card: Data Irrigation.jpeg,0,type-b9b5a788-6f3b-4d56-a09e-2f1f86c7fc91
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/0fe80162-9e43-4bb2-b450-cb7ca29d1a2b.jpeg?alt=media&token=c77532a7-0d20-4ed8-97b3-284c4b030ab0,Script Card: Honey Jar.jpeg,0,type-a3187fc6-88ae-48ef-b8d1-2b770aca75a3
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/f353d80c-a40d-48bf-8194-bf4e5288790c.jpeg?alt=media&token=97d78f86-655a-4584-82ea-d0b16bc9412b,Script Card: Instant Transfer.jpeg,0,type-a7fd6536-2e3f-4733-95fc-4b8fea4c0910
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/571ebfb9-cdae-43b8-ad0a-606d650c2e2d.jpeg?alt=media&token=01af3b6a-f71e-4fee-b05f-94396baa1d8d,Script Card: Perspective Shift.jpeg,1,type-307be3cc-32c8-4fba-b8ad-376939c1d9c0
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/c9a50506-bfa4-41fe-94f6-cf1de9cc0d0b.jpeg?alt=media&token=5454090d-4dc5-4152-b4f8-29e75f917845,Script Card: Surge Protector.jpeg,1,type-75aa4003-aafb-420b-b2c3-35e6250173e1
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/78da4a8c-5a7d-45ee-bd01-781fdfe96767.jpeg?alt=media&token=457c6456-1796-4c0a-be52-323bebc2bc3d,Supporter Card: Ascended Seraph.jpeg,1,type-d2874d1b-856e-484a-9806-fcbd8b71ad45
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/08539a20-b269-4947-a1bf-68f027c07ec6.jpeg?alt=media&token=be973b83-61f8-4221-9b85-7a0e69e8f0ec,Supporter Card: Bunny Tanks.jpeg,2,type-9a8b9576-0daf-4cd1-8a30-6a6d52ee07c5
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/5552d38c-d92c-4042-b8a3-fbc34d1b28b2.jpeg?alt=media&token=fe70655b-bc00-45bf-8ce1-5879f801fef1,Supporter Card: Cosmic Panda.jpeg,0,type-1c261ff0-48ce-4a11-8576-4c0dfc37549b
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/6997934e-5c14-406d-ac72-15a00cb00698.jpeg?alt=media&token=7bb24aed-5c52-4a46-adbf-31b34067b2db,Supporter Card: Cosmic Whale.jpeg,1,type-66ee43b9-e2ec-4185-8933-7f03b86f0c53
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/600cce89-94e3-47dc-b2a4-eac40ec7e080.jpeg?alt=media&token=bc591af6-8067-4b7c-a955-83a08c92460c,Supporter Card: Glaussiere Io.jpeg,1,type-81c960f7-9c8a-4d5f-88a7-4f1153e22a8f
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/4307f26a-dedf-464c-98e4-26debf2ab9ce.jpeg?alt=media&token=f4c8d33f-b337-4619-aaf8-cc5d9a66e050,Supporter Card: Hue Io.jpeg,1,type-6fcc1ba4-b62a-4775-9671-8d16b121b855
+https://firebasestorage.googleapis.com/v0/b/playingcardsio.appspot.com/o/b85c8999-4f5d-48c6-9a5c-f6ceb344cc77.jpeg?alt=media&token=14752002-17cd-4531-a68f-d9fa41799412,Supporter Card: Seraph.jpeg,1,type-70ab5ff8-b089-4bea-8e1b-ea83e8eb475f
+`;
+        // --- DOM Elements ---
+        const galleryView = document.getElementById('galleryView');
+        const detailView = document.getElementById('detailView');
+        const rulesView = document.getElementById('rulesView'); 
+        const cardGrid = document.getElementById('cardGrid');
+        const noResultsP = document.getElementById('noResults');
+        const searchInput = document.getElementById('search');
+        const cardTypeFilterDropdown = document.getElementById('cardTypeFilterDropdown');
+        
+        const detailCardImage = document.getElementById('detailCardImage');
+        const detailCardName = document.getElementById('detailCardName');
+        const detailCardType = document.getElementById('detailCardType');
+        const detailAddToDeckBtn = document.getElementById('detailAddToDeckBtn'); 
+        const detailCardTextSection = document.getElementById('detailCardTextSection');
+        const detailCardSyntaxSection = document.getElementById('detailCardSyntaxSection');
+        const detailCardAttributesSection = document.getElementById('detailCardAttributesSection');
+        const attributeListContainer = document.getElementById('attributeListContainer'); 
+        const noDetailedInfoP = document.getElementById('noDetailedInfo');
+        const detailCardText = document.getElementById('detailCardText');
+        const detailCardSyntax = document.getElementById('detailCardSyntax');
+
+        const backToGalleryButton = document.getElementById('backToGallery');
+        const backToGalleryFromRulesButton = document.getElementById('backToGalleryFromRules'); 
+        const howToPlayButton = document.getElementById('howToPlayButton'); 
+
+        const relatedCardsContainer = document.getElementById('relatedCardsContainer');
+        const relatedCardsTitle = document.getElementById('relatedCardsTitle');
+        const noRelatedCardsP = document.getElementById('noRelatedCards');
+        const themeToggle = document.getElementById('themeToggleCheckbox');
+        
+        const signUpButton = document.getElementById('signUpButton');
+        const logoutButton = document.getElementById('logoutButton');
+        const userWelcomeMessage = document.getElementById('userWelcomeMessage');
+
+        const onboardingModalOverlay = document.getElementById('onboardingModalOverlay');
+        const closeOnboardingModalButton = document.getElementById('closeOnboardingModal');
+        const deckIconButton = document.getElementById('deckIcon');
+        const deckModalOverlay = document.getElementById('deckModalOverlay');
+        const closeDeckModalButton = document.getElementById('closeDeckModal');
+        const deckCardList = document.getElementById('deckCardList');
+        const downloadDeckCsvButton = document.getElementById('downloadDeckCsv');
+        const importDeckCsvInput = document.getElementById('importDeckCsvInput');
+        const saveDeckSection = document.getElementById('saveDeckSection');
+        const deckNameInput = document.getElementById('deckNameInput');
+        const saveCurrentDeckButton = document.getElementById('saveCurrentDeckButton');
+        const savedDecksSection = document.getElementById('savedDecksSection');
+        const savedDecksList = document.getElementById('savedDecksList');
+
+
+        const onboardingSteps = [
+            document.getElementById('onboardingStep1'), document.getElementById('onboardingStep2'),
+            document.getElementById('onboardingStep3'), document.getElementById('onboardingStep4')
+        ];
+        const tcgSurveyOptionsContainer = document.getElementById('tcgSurveyOptions');
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        let allCards = [];
+        let cardTypes = new Set();
+        let currentDeck = []; 
+        let currentUser = null; 
+
+        // --- Syntax Parsing and Rendering (Icons and Mappings remain the same) ---
+        const syntaxIcons = { 
+            ACTION: `<svg class="syntax-tile-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" /></svg>`,
+            TARGET: `<svg class="syntax-tile-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`,
+            DETAILS: `<svg class="syntax-tile-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" /></svg>`,
+            CONDITION: `<svg class="syntax-tile-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" /></svg>`,
+            TIMING: `<svg class="syntax-tile-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
+            COST: `<svg class="syntax-tile-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>`,
+            GENERIC_EFFECT: `<svg class="syntax-tile-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+        };
+        const actionMappings = { 
+            DEFAULT: { simpleText: (action) => action.replace(/_/g, ' '), icon: syntaxIcons.GENERIC_EFFECT, tileClass: '' },
+            MOVE: { simpleText: () => "Move", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            ADD_CHARGE: { simpleText: () => "Add Charge", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            SEARCH: { simpleText: () => "Search", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            SHUFFLE: { simpleText: () => "Shuffle", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            ATTACH: { simpleText: () => "Attach", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            REAL_ACTION: { simpleText: (params) => `${params.split(',')[0].replace(/_/g, ' ')}`, icon: syntaxIcons.ACTION, tileClass: 'tile-action' }, 
+            QUOTE: { simpleText: () => "Quote", icon: syntaxIcons.DETAILS, tileClass: 'tile-details' },
+            COST: { simpleText: () => "Cost", icon: syntaxIcons.COST, tileClass: 'tile-cost' },
+            FULL_CHARGE: { simpleText: () => "Fully Charge", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            HR_CHANGE: { simpleText: () => "Heart Rate Change", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            PREVENT: { simpleText: () => "Prevent / Block", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            REMOVE_CHARGE: { simpleText: () => "Remove Charge", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            DISCARD: { simpleText: () => "Discard", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            DRAW: { simpleText: () => "Draw Card(s)", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            NEGATE: { simpleText: () => "Cancel Effect", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            MODIFY_CHARGE: { simpleText: () => "Modify Charge", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            MODIFY_DAMAGE: { simpleText: () => "Modify Damage", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            REVEAL: { simpleText: () => "Reveal", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            END_TURN: { simpleText: () => "End Turn", icon: syntaxIcons.TIMING, tileClass: 'tile-timing' },
+            ONCE_PER: { simpleText: (params) => `Once per ${params.split(',')[0].replace(/_/g, ' ')}`, icon: syntaxIcons.TIMING, tileClass: 'tile-timing' },
+            RETURN: { simpleText: () => "Return", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            HR_PROTECT: { simpleText: () => "Protect Heart Rate", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            STACK_REQ: { simpleText: () => "Modify Stack Req.", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            VIEW: { simpleText: () => "View", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            ARRANGE: { simpleText: () => "Arrange", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            PLACE: { simpleText: () => "Place", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            REDUCE_DMG: { simpleText: () => "Reduce Damage", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            COPY: { simpleText: () => "Copy", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+            SELECT: { simpleText: () => "Select", icon: syntaxIcons.ACTION, tileClass: 'tile-action' },
+        };
+        
+        function normalizeText(text) { if (!text) return ''; return text.toLowerCase().replace(/[\s-:]/g, ''); }
+        function createCardKey(name, type) { return `${normalizeText(type)}_${normalizeText(name)}`; }
+        
+        // --- CSV Parsing and Merging ---
+        function parseAndMergeCSV() { 
+            const imageMap = {};
+            const linesNew = csvDataWithImageLinks.trim().split('\n').slice(1);
+            linesNew.forEach(line => {
+                const values = line.split(','); const imageUrl = (values[0] || '').trim();
+                if (!imageUrl.startsWith('https://')) { return; } // Skip if not a valid URL
+                const label = (values[1] || '').trim().replace(/\.(jpeg|png)$/i, ''); const itemKey = (values[3] || '').trim();
+                let cardNameFromLabel = label; let cardTypeFromLabel = "Unknown Type";
+                const typeSeparatorIndex = label.indexOf(':');
+                if (typeSeparatorIndex !== -1) { cardTypeFromLabel = label.substring(0, typeSeparatorIndex).trim(); cardNameFromLabel = label.substring(typeSeparatorIndex + 1).trim(); } 
+                else if (label.toLowerCase() === "card back") { cardNameFromLabel = "Card Back"; cardTypeFromLabel = "Other"; }
+                // Normalize card types for consistency
+                if (cardTypeFromLabel === "Mind Card") cardTypeFromLabel = "Care Card"; else if (cardTypeFromLabel === "Lumiverse Card") cardTypeFromLabel = "Other"; else if (cardTypeFromLabel === "Response Card") cardTypeFromLabel = "Script Card";
+                const key = createCardKey(cardNameFromLabel, cardTypeFromLabel);
+                imageMap[key] = { url: imageUrl, id: itemKey, name: cardNameFromLabel, type: cardTypeFromLabel };
+            });
+            const linesOld = csvDataOld.trim().split('\n'); const headersOld = linesOld[0].split(',').map(h => h.trim());
+            const mergedCards = []; const tempCardTypes = new Set();
+            linesOld.slice(1).forEach((line, index) => {
+                const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || []; const card = {};
+                headersOld.forEach((header, i) => { let value = (values[i] || '').trim(); if (value.startsWith('"') && value.endsWith('"')) { value = value.substring(1, value.length - 1).replace(/""/g, '"'); } card[header] = value; });
+                if (card.card_name === "Cylas" || card.card_name === "Felicity Feldt") { return; } // Skip specific cards if needed
+                let originalType = card.card_type;
+                if (originalType === "Mind Card") card.card_type = "Care Card"; else if (originalType === "Lumiverse Card") card.card_type = "Other"; else if (card.card_name === "Card Back") card.card_type = "Other"; else if (originalType === "Response Card") card.card_type = "Script Card";
+                const key = createCardKey(card.card_name, card.card_type); let imageData = imageMap[key];
+                // Fallback for slight name mismatches
+                if (!imageData) { const normalizedCardName = normalizeText(card.card_name); for (const mapKey in imageMap) { if (mapKey.endsWith(`_${normalizedCardName}`)) { const imageMapEntryType = imageMap[mapKey].type; if (imageMapEntryType === card.card_type) { imageData = imageMap[mapKey]; break; } } } }
+                // Specific known mismatches
+                if (card.card_name === "Fount of Blessing" && !imageData) imageData = imageMap[createCardKey("Font of Blessing", card.card_type)]; if (card.card_name === "Spacewalk" && !imageData) imageData = imageMap[createCardKey("Soacewalk", card.card_type)]; if (card.card_name === "Desparate Plea" && !imageData) imageData = imageMap[createCardKey("Desperate Plea", card.card_type)];
+                
+                if (imageData) { card.image_url = imageData.url; card.id = imageData.id; } else { card.image_url = null; card.id = `card-old-${index}`; }
+                card.text = card.text || ""; card.effect_syntax = card.effect_syntax || "";
+                if (card.card_type && originalType !== "Mind Card" && originalType !== "Lumiverse Card" && originalType !== "Response Card") { tempCardTypes.add(card.card_type); } else if (card.card_type === "Care Card" || card.card_type === "Script Card" || card.card_type === "Other") { tempCardTypes.add(card.card_type); }
+                mergedCards.push(card);
+            });
+            // Add any cards from imageMap not found in old CSV
+            Object.values(imageMap).forEach(imageData => { if (!mergedCards.some(card => card.id === imageData.id)) { let cardTypeFromImageMap = imageData.type; mergedCards.push({ id: imageData.id, card_name: imageData.name, card_type: cardTypeFromImageMap, image_url: imageData.url, text: "", effect_syntax: "" }); if (cardTypeFromImageMap && cardTypeFromImageMap !== "Mind Card" && cardTypeFromImageMap !== "Lumiverse Card" && cardTypeFromImageMap !== "Response Card") { tempCardTypes.add(cardTypeFromImageMap); } } });
+            cardTypes = tempCardTypes; if (!cardTypes.has("Other") && mergedCards.some(c => c.card_type === "Other")) { cardTypes.add("Other"); }
+            ["Mind Card", "Lumiverse Card", "Response Card"].forEach(removedType => cardTypes.delete(removedType)); // Remove obsolete types
+            return mergedCards;
+        }
+        
+        function titleCase(str, preserveCaps = false) { 
+            if (!str) return '';
+            if (preserveCaps) return str.replace(/_/g, ' ');
+            return str.toLowerCase().split('_').map(word => {
+                if (["SELF", "OPP", "ANY", "ALL", "STAGE", "DECK", "HAND", "ITEM", "DATALYTH", "ACTOR", "SUPPORTER", "SCRIPT", "SOURCE"].includes(word.toUpperCase())) {
+                    return word.toUpperCase();
+                }
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join(' ');
+        }
+
+        function parseSingleEffect(effectStr) { 
+            if (!effectStr) return null;
+            effectStr = effectStr.substring(1, effectStr.length - 1); // Remove brackets
+            let mainPart = effectStr; let conditionString = null; let timingString = null;
+            // Split by timing first, then condition
+            if (mainPart.includes('|')) { [mainPart, timingString] = mainPart.split('|', 2); }
+            if (mainPart.includes('?')) { [mainPart, conditionString] = mainPart.split('?', 2); }
+            const parts = mainPart.split(':').map(s => s.trim());
+            const actionKey = parts[0].toUpperCase();
+            const actionInfo = actionMappings[actionKey] || actionMappings.DEFAULT;
+            let params = parts.slice(1); let targetChipText = null; let detailsChipText = null;
+            // Logic for different action keys to format text (remains same as previous)
+            if (actionKey === "COST") {
+                targetChipText = `Pay ${titleCase(params[0] || '', true)}`;
+                if (params[1]) detailsChipText = `Amount: <strong>${titleCase(params[1], true)}</strong>`;
+            } else if (actionKey === "ADD_CHARGE" || actionKey === "REMOVE_CHARGE") {
+                targetChipText = `Target: ${titleCase(params[0] || '', true)} ${titleCase(params[1] || '', true)}`.trim();
+                if (params[2]) detailsChipText = `Which: ${titleCase(params[2], true)}`;
+                if (params[3]) detailsChipText = (detailsChipText ? detailsChipText + ", " : "") + `Amount: <strong>${titleCase(params[3], true)}</strong>`;
+            } else if (actionKey === "HR_CHANGE") {
+                targetChipText = `Target: ${titleCase(params[0] || '', true)}`;
+                if (params[1]) detailsChipText = `Change: <strong>${params[1]}</strong> BPM`;
+            } else if (actionKey === "MOVE") {
+                targetChipText = `Move: ${titleCase(params[0] || '', true)}`;
+                if (params[1]) detailsChipText = `To: ${titleCase(params[1], true)}`;
+            } else if (actionKey === "SEARCH") {
+                targetChipText = `Search in: ${titleCase(params[0] || '', true)}`;
+                if (params[1]) detailsChipText = `For: ${titleCase(params[1], true)}`;
+                if (params[2]) detailsChipText += `, Qty: <strong>${titleCase(params[2], true)}</strong>`;
+                if (params[3]) detailsChipText += `, To: ${titleCase(params[3], true)}`;
+            } else if (actionKey === "QUOTE") {
+                targetChipText = `From: ${titleCase(params[0] || '', true)}`;
+                if (params[1]) detailsChipText = `"${params.slice(1).join(': ')}"`;
+            } else if (actionKey === "REAL_ACTION") {
+                if (params[1]) detailsChipText = `Details: ${titleCase(params.slice(1).join(', '), true)}`;
+            } else if (params.length > 0) {
+                targetChipText = titleCase(params[0], true);
+                if (params.length > 1) {
+                    detailsChipText = params.slice(1).map(p => titleCase(p, true).replace(/(\d+)/g, '<strong>$1</strong>')).join(', ');
+                }
+            }
+            return {
+                action: { text: actionInfo.simpleText(mainPart), icon: actionInfo.icon, tileClass: actionInfo.tileClass },
+                target: targetChipText, details: detailsChipText,
+                condition: conditionString ? `Only if ${conditionString.replace(/_/g, ' ').replace(/,/g, ', ').replace(/==/g, ' is ').replace(/>=/g, ' >= ').replace(/<=/g, ' <= ').replace(/>/g, ' > ').replace(/</g, ' < ')}` : null,
+                timing: timingString ? `When: ${titleCase(timingString.replace(/:/g, ' - ').replace(/_/g, ' '), true)}` : null,
+                cost: actionKey === "COST" ? `${targetChipText} ${detailsChipText || ''}`.trim() : null
+            };
+        }
+        function parseAllEffects(syntaxString) { 
+            if (!syntaxString || syntaxString.trim() === '') return [];
+            return syntaxString.split(';').map(s => s.trim()).filter(s => s.length > 1 && s.startsWith('[') && s.endsWith(']')).map(parseSingleEffect).filter(effect => effect !== null);
+        }
+
+        function renderEffectSyntax(effectsArray, container) {
+            container.innerHTML = ''; 
+            if (!effectsArray || effectsArray.length === 0) {
+                const p = document.createElement('p'); p.textContent = 'No specific effects listed.'; p.className = 'italic text-xs sm:text-sm'; p.style.color = 'var(--text-secondary)';
+                container.appendChild(p); return;
+            }
+            effectsArray.forEach(effect => {
+                const effectTile = document.createElement('div'); effectTile.className = `syntax-tile ${effect.action.tileClass}`;
+                const textContentDiv = document.createElement('div'); textContentDiv.className = 'syntax-tile-text-content text-xs sm:text-sm'; // Adjusted font size
+                let fullEffectText = effect.action.text;
+                if (effect.target) fullEffectText += `: ${effect.target}`;
+                if (effect.details) fullEffectText += ` (${effect.details})`;
+                if (effect.cost) fullEffectText = effect.cost; 
+                textContentDiv.innerHTML = fullEffectText; 
+                if (effect.condition) { const conditionSpan = document.createElement('span'); conditionSpan.className = 'condition-text text-xs'; conditionSpan.textContent = effect.condition; textContentDiv.appendChild(conditionSpan); }
+                if (effect.timing) { const timingSpan = document.createElement('span'); timingSpan.className = 'timing-text text-xs'; timingSpan.textContent = effect.timing; textContentDiv.appendChild(timingSpan); }
+                effectTile.appendChild(textContentDiv); effectTile.innerHTML += effect.action.icon; 
+                container.appendChild(effectTile);
+            });
+        }
+
+        // --- Card Rendering ---
+        function renderCardThumbnail(card, isRelated = false) { 
+            const cardDiv = document.createElement('div');
+            cardDiv.className = `card-thumbnail cursor-pointer ${isRelated ? 'min-w-[120px] max-w-[120px] sm:min-w-[150px] sm:max-w-[150px]' : ''}`; // Adjusted size for related cards
+            cardDiv.dataset.cardId = card.id;
+            const imageSrc = card.image_url || `https://placehold.co/250x350/e0e5ec/374151?text=${encodeURIComponent(card.card_name ? card.card_name.substring(0,15) : 'Card')}`;
+            const placeholderUrl = `https://placehold.co/250x350/e0e5ec/374151?text=${encodeURIComponent(card.card_name ? card.card_name.substring(0,15) : 'Card')}`;
+            const addToDeckButton = `<button class="add-to-deck-btn p-1 sm:p-1.5 glassmorphic rounded-full" title="Add to Deck" data-card-id="${card.id}" style="margin-left: auto;"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor" style="color: var(--accent-color);"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg></button>`;
+            cardDiv.innerHTML = `<div class="glassmorphic overflow-hidden relative rounded-lg"><div class="w-full card-thumbnail-image-container"><img src="${imageSrc}" alt="${card.card_name || 'Card'}" onerror="this.onerror=null; this.src='${placeholderUrl}';"></div><div class="p-2 sm:p-3 card-thumbnail-content flex justify-between items-center"><div><h3 class="text-xs sm:text-sm font-semibold truncate" title="${card.card_name || 'N/A'}" style="color: var(--text-primary);">${card.card_name || 'N/A'}</h3><p class="text-xs" style="color: var(--accent-color);">${card.card_type || 'N/A'}</p></div>${!isRelated ? addToDeckButton : ''}</div></div>`;
+            cardDiv.addEventListener('click', (e) => { if (e.target.closest('.add-to-deck-btn')) { return; } showDetailView(card.id); });
+            const btn = cardDiv.querySelector('.add-to-deck-btn');
+            if (btn) { btn.addEventListener('click', (e) => { e.stopPropagation(); addCardToDeck(card.id); }); }
+            return cardDiv;
+        }
+        function renderGallery(cardsToDisplay) { 
+            cardGrid.innerHTML = '';
+            if (cardsToDisplay.length === 0) { noResultsP.classList.remove('hidden'); } 
+            else { noResultsP.classList.add('hidden'); cardsToDisplay.forEach(card => cardGrid.appendChild(renderCardThumbnail(card))); }
+        }
+        function renderCardDetail(card) { 
+            const detailImageEl = document.getElementById('detailCardImage');
+            const imageSrcToLoad = card.image_url || `https://placehold.co/400x560/e0e5ec/374151?text=${encodeURIComponent(card.card_name || 'Card')}`;
+            const detailImageContainer = detailImageEl.parentElement; 
+            detailImageContainer.classList.remove('flex', 'items-center', 'justify-center'); 
+            detailImageEl.src = imageSrcToLoad; detailImageEl.alt = card.card_name || 'Card Image';
+            detailCardName.textContent = card.card_name || "N/A";
+            detailCardType.textContent = card.card_type || "N/A";
+            if(detailAddToDeckBtn) { detailAddToDeckBtn.dataset.cardId = card.id; detailAddToDeckBtn.onclick = (e) => { e.stopPropagation(); addCardToDeck(card.id); }; }
+            const hasDetailedText = card.text && card.text.trim() !== "";
+            const hasSyntax = card.effect_syntax && card.effect_syntax.trim() !== "";
+            const attributesData = { "Max BPM": card.max_bpm, "Per Slot Charge": card.per_slot_charge, "Datalyth Slots": card.datalyth_slots, "Stack Damage": card.stack_damage, "Generic Value": card.generic_value, "Number of Effects": card.num_effects, "Effect Types": card.effect_types_list ? card.effect_types_list.replace(/,/g, ', ') : '', "Has Condition?": card.has_condition === 'TRUE' ? 'Yes' : (card.has_condition === 'FALSE' ? 'No' : ''), "Has Timing?": card.has_timing === 'TRUE' ? 'Yes' : (card.has_timing === 'FALSE' ? 'No' : '') };
+            let hasAnyAttributeData = false; attributeListContainer.innerHTML = '';
+            for (const [key, value] of Object.entries(attributesData)) {
+                if (value && String(value).trim() !== '') { hasAnyAttributeData = true; const attrDiv = document.createElement('div'); attrDiv.innerHTML = `// ${key}: <strong>${value}</strong>`; attributeListContainer.appendChild(attrDiv); }
+            }
+            detailCardTextSection.classList.toggle('hidden-section', !hasDetailedText);
+            detailCardAttributesSection.classList.toggle('hidden-section', !hasAnyAttributeData && !hasSyntax); 
+            noDetailedInfoP.classList.toggle('hidden-section', hasDetailedText || hasSyntax || hasAnyAttributeData);
+            detailCardText.textContent = hasDetailedText ? card.text : "";
+            
+            const syntaxParentSection = document.getElementById('detailCardSyntaxSection'); 
+            if (hasSyntax) {
+                syntaxParentSection.classList.remove('hidden-section');
+                const parsedEffects = parseAllEffects(card.effect_syntax);
+                renderEffectSyntax(parsedEffects, detailCardSyntax); 
+            } else {
+                syntaxParentSection.classList.add('hidden-section');
+                detailCardSyntax.innerHTML = ''; 
+            }
+            renderRelatedCards(card.card_type, card.id);
+        }
+        function renderRelatedCards(cardType, currentCardId) { 
+            relatedCardsContainer.innerHTML = '';
+            const related = allCards.filter(c => c.card_type === cardType && c.id !== currentCardId);
+            relatedCardsTitle.textContent = `Other ${cardType}s`;
+            if (related.length === 0) { noRelatedCardsP.classList.remove('hidden'); relatedCardsContainer.classList.add('hidden'); } 
+            else { noRelatedCardsP.classList.add('hidden'); relatedCardsContainer.classList.remove('hidden'); related.forEach(card => relatedCardsContainer.appendChild(renderCardThumbnail(card, true))); }
+        }
+        
+        // --- Filtering and Search ---
+        function setupFilters() { 
+            if (!cardTypeFilterDropdown) return;
+            cardTypeFilterDropdown.innerHTML = ''; 
+            const allOption = document.createElement('option'); allOption.value = 'all'; allOption.textContent = 'All Types'; cardTypeFilterDropdown.appendChild(allOption);
+            Array.from(cardTypes).sort().forEach(type => { const option = document.createElement('option'); option.value = type; option.textContent = type.replace(/\s*Card$/i, ''); cardTypeFilterDropdown.appendChild(option); });
+            cardTypeFilterDropdown.value = 'all'; 
+            cardTypeFilterDropdown.addEventListener('change', filterAndRenderCards);
+        }
+        
+        let currentFilterType = 'all';
+        let currentSearchTerm = '';
+        function filterAndRenderCards() { 
+            currentSearchTerm = searchInput.value.toLowerCase();
+            currentFilterType = cardTypeFilterDropdown.value;
+            let filteredCards = allCards;
+            if (currentFilterType !== 'all') { filteredCards = filteredCards.filter(card => card.card_type === currentFilterType); }
+            if (currentSearchTerm) { filteredCards = filteredCards.filter(card => (card.card_name && card.card_name.toLowerCase().includes(currentSearchTerm)) || (card.card_type && card.card_type.toLowerCase().includes(currentSearchTerm)) || (card.text && card.text.toLowerCase().includes(currentSearchTerm)) || (card.effect_types_list && card.effect_types_list.toLowerCase().includes(currentSearchTerm))); }
+            renderGallery(filteredCards);
+        }
+
+        // --- View Management ---
+        function showMainContentArea(areaToShow) { 
+            galleryView.classList.add('hidden');
+            detailView.classList.add('hidden');
+            rulesView.classList.add('hidden');
+            if (areaToShow) areaToShow.classList.remove('hidden');
+            if (onboardingModalOverlay) onboardingModalOverlay.classList.remove('active'); 
+            if (deckModalOverlay) deckModalOverlay.classList.remove('active');
+            window.scrollTo(0, 0); // Scroll to top on view change
+        }
+
+        function showGalleryView() { showMainContentArea(galleryView); }
+        function showDetailView(cardId) { const card = allCards.find(c => c.id === cardId); if (card) { renderCardDetail(card); showMainContentArea(detailView); } }
+        function showRulesView() { renderRulesPage(); showMainContentArea(rulesView); }
+
+        // --- Theme Management ---
+        function applyTheme(theme) { 
+            const sunIcon = document.querySelector('.sun-icon');
+            const moonIcon = document.querySelector('.moon-icon');
+            if (theme === 'dark') { 
+                document.documentElement.classList.add('dark-theme'); document.documentElement.classList.remove('light-theme'); 
+                if(themeToggle) themeToggle.checked = true;
+                if(sunIcon) sunIcon.style.opacity = '0';
+                if(moonIcon) moonIcon.style.opacity = '1';
+            } else { 
+                document.documentElement.classList.add('light-theme'); document.documentElement.classList.remove('dark-theme'); 
+                if(themeToggle) themeToggle.checked = false;
+                if(sunIcon) sunIcon.style.opacity = '1';
+                if(moonIcon) moonIcon.style.opacity = '0';
+            }
+        }
+        if(themeToggle) { themeToggle.addEventListener('change', () => { const newTheme = themeToggle.checked ? 'dark' : 'light'; localStorage.setItem('theme', newTheme); applyTheme(newTheme); }); }
+        
+        // --- Animated Search Placeholder ---
+        const searchPlaceholders = [ "Search card names...", "e.g., Luc Loic", "Search effects...", "e.g., ADD_CHARGE", "Find by type...", "Try 'Actor Card'", "Discover new cards!" ];
+        let placeholderAnimIndex = 0; let placeholderCharIndex = 0; let currentPlaceholderText = ''; let isDeletingPlaceholder = false; let placeholderAnimTimeout;
+        function typeAnimatedPlaceholder() {
+            const fullText = searchPlaceholders[placeholderAnimIndex];
+            if (isDeletingPlaceholder) { currentPlaceholderText = fullText.substring(0, placeholderCharIndex - 1); placeholderCharIndex--; } 
+            else { currentPlaceholderText = fullText.substring(0, placeholderCharIndex + 1); placeholderCharIndex++; }
+            searchInput.placeholder = currentPlaceholderText;
+            let typeSpeed = isDeletingPlaceholder ? 30 : 60; 
+            if (!isDeletingPlaceholder && placeholderCharIndex === fullText.length) { typeSpeed = 2000; isDeletingPlaceholder = true; } 
+            else if (isDeletingPlaceholder && placeholderCharIndex === 0) { isDeletingPlaceholder = false; placeholderAnimIndex = (placeholderAnimIndex + 1) % searchPlaceholders.length; typeSpeed = 300; }
+            placeholderAnimTimeout = setTimeout(typeAnimatedPlaceholder, typeSpeed);
+        }
+        if(searchInput) {
+            searchInput.addEventListener('focus', () => { clearTimeout(placeholderAnimTimeout); searchInput.placeholder = "Search name, text, effects..."; document.querySelector('.blinking-caret').style.display = 'none'; });
+            searchInput.addEventListener('blur', () => { if (searchInput.value === '') { placeholderCharIndex = 0; isDeletingPlaceholder = false; currentPlaceholderText = ''; typeAnimatedPlaceholder(); document.querySelector('.blinking-caret').style.display = 'block';} else { document.querySelector('.blinking-caret').style.display = 'none'; } });
+            searchInput.addEventListener('input', () => { document.querySelector('.blinking-caret').style.display = searchInput.value ? 'none' : 'block'; });
+        }
+
+        // --- User Authentication (Conceptual) ---
+        function updateUserAuthUI() {
+            const storedUser = localStorage.getItem('lumiverseUser');
+            if (storedUser) {
+                currentUser = JSON.parse(storedUser);
+                signUpButton.classList.add('hidden');
+                logoutButton.classList.remove('hidden');
+                userWelcomeMessage.textContent = `Welcome, ${currentUser.username}!`;
+                userWelcomeMessage.classList.remove('hidden'); 
+                saveDeckSection.classList.remove('hidden');
+                savedDecksSection.classList.remove('hidden');
+                renderSavedDecks();
+            } else {
+                currentUser = null;
+                signUpButton.classList.remove('hidden');
+                logoutButton.classList.add('hidden');
+                userWelcomeMessage.textContent = '';
+                userWelcomeMessage.classList.add('hidden'); 
+                saveDeckSection.classList.add('hidden');
+                savedDecksSection.classList.add('hidden');
+            }
+        }
+
+        if (signUpButton) { signUpButton.addEventListener('click', () => { if(onboardingModalOverlay) onboardingModalOverlay.classList.add('active'); showOnboardingStep(0); }); }
+        if (logoutButton) { logoutButton.addEventListener('click', () => { localStorage.removeItem('lumiverseUser'); if(currentUser) localStorage.removeItem(`lumiverseUserDecks_${currentUser.username}`); updateUserAuthUI(); currentDeck = []; renderDeckModal(); }); } 
+        
+        // --- Onboarding Modal Logic ---
+        let currentOnboardingStep = 0;
+        const tcgGames = [ "Magic: The Gathering", "Pokémon Trading Card Game", "Yu-Gi-Oh!", "Hearthstone", "Marvel Snap", "One Piece Card Game", "Disney Lorcana", "Star Wars: Unlimited", "Flesh and Blood", "Digimon Card Game", "Other", "None" ];
+        function showOnboardingStep(stepIndex) { onboardingSteps.forEach((step, index) => { if(step) step.classList.toggle('active', index === stepIndex); }); currentOnboardingStep = stepIndex; }
+        function displayError(elementId, message) { const errorEl = document.getElementById(elementId); if (errorEl) { errorEl.textContent = message; errorEl.classList.remove('hidden'); } }
+        function clearError(elementId) { const errorEl = document.getElementById(elementId); if (errorEl) { errorEl.textContent = ''; errorEl.classList.add('hidden'); } }
+        function validateEmail(email) { const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; return re.test(String(email).toLowerCase()); }
+        if (closeOnboardingModalButton) { closeOnboardingModalButton.addEventListener('click', () => { if(onboardingModalOverlay) onboardingModalOverlay.classList.remove('active'); }); }
+        if(onboardingModalOverlay) { onboardingModalOverlay.addEventListener('click', (event) => { if (event.target === onboardingModalOverlay) { onboardingModalOverlay.classList.remove('active'); } }); }
+        const nextToStep2 = document.getElementById('nextToStep2'); const backToStep1 = document.getElementById('backToStep1'); const nextToStep3 = document.getElementById('nextToStep3'); const backToStep2 = document.getElementById('backToStep2'); const nextToStep4 = document.getElementById('nextToStep4'); const backToStep3 = document.getElementById('backToStep3'); const finishOnboarding = document.getElementById('finishOnboarding');
+        if(nextToStep2) nextToStep2.addEventListener('click', () => { const email = document.getElementById('onboardingEmail').value; const password = document.getElementById('onboardingPassword').value; const confirmPassword = document.getElementById('onboardingConfirmPassword').value; let valid = true; clearError('emailError'); clearError('passwordError'); clearError('confirmPasswordError'); if (!validateEmail(email)) { displayError('emailError', 'Please enter a valid email.'); valid = false; } if (password.length < 6) { displayError('passwordError', 'Password must be at least 6 characters.'); valid = false; } if (password !== confirmPassword) { displayError('confirmPasswordError', 'Passwords do not match.'); valid = false; } if (valid) showOnboardingStep(1); });
+        if(backToStep1) backToStep1.addEventListener('click', () => showOnboardingStep(0));
+        if(nextToStep3) nextToStep3.addEventListener('click', () => { const username = document.getElementById('onboardingUsername').value; clearError('usernameError'); if (username.trim().length < 3) { displayError('usernameError', 'Username must be at least 3 characters.'); return; } showOnboardingStep(2); });
+        if(backToStep2) backToStep2.addEventListener('click', () => showOnboardingStep(1)); if(nextToStep4) nextToStep4.addEventListener('click', () => showOnboardingStep(3)); if(backToStep3) backToStep3.addEventListener('click', () => showOnboardingStep(2));
+        if(finishOnboarding) { finishOnboarding.addEventListener('click', () => { const email = document.getElementById('onboardingEmail').value; const username = document.getElementById('onboardingUsername').value; localStorage.setItem('lumiverseUser', JSON.stringify({ email: email, username: username })); updateUserAuthUI(); if(onboardingModalOverlay) onboardingModalOverlay.classList.remove('active'); alert(`Welcome, ${username}! Your account is set up (locally).`); }); }
+        if (tcgSurveyOptionsContainer) { tcgGames.forEach(game => { const optionDiv = document.createElement('div'); optionDiv.className = 'survey-option flex items-center'; const checkboxId = `tcg-${game.replace(/\s+/g, '-')}`; optionDiv.innerHTML = `<input type="checkbox" id="${checkboxId}" name="tcg" value="${game}" class="neumorphic-checkbox"><label for="${checkboxId}" class="text-xs sm:text-sm">${game}</label>`; tcgSurveyOptionsContainer.appendChild(optionDiv); }); }
+        
+        // --- Deck Management ---
+        function getSavedDecks() {
+            if (!currentUser) return [];
+            const decksJson = localStorage.getItem(`lumiverseUserDecks_${currentUser.username}`);
+            return decksJson ? JSON.parse(decksJson) : [];
+        }
+        function saveDecksToStorage(decks) {
+            if (!currentUser) return;
+            localStorage.setItem(`lumiverseUserDecks_${currentUser.username}`, JSON.stringify(decks));
+        }
+        if (saveCurrentDeckButton) {
+            saveCurrentDeckButton.addEventListener('click', () => {
+                const deckName = deckNameInput.value.trim();
+                if (!deckName) { alert("Please enter a name for your deck."); return; }
+                if (currentDeck.length === 0) { alert("Cannot save an empty deck."); return; }
+                
+                const savedDecks = getSavedDecks();
+                const existingDeckIndex = savedDecks.findIndex(d => d.name === deckName);
+                const newDeckData = { name: deckName, cards: JSON.parse(JSON.stringify(currentDeck)) }; 
+
+                if (existingDeckIndex > -1) { 
+                    if (confirm(`A deck named "${deckName}" already exists. Overwrite it?`)) {
+                        savedDecks[existingDeckIndex] = newDeckData;
+                    } else { return; }
+                } else {
+                    savedDecks.push(newDeckData);
+                }
+                saveDecksToStorage(savedDecks);
+                renderSavedDecks();
+                deckNameInput.value = ''; 
+                alert(`Deck "${deckName}" saved!`);
+            });
+        }
+        function renderSavedDecks() {
+            savedDecksList.innerHTML = '';
+            const decks = getSavedDecks();
+            if (decks.length === 0) {
+                savedDecksList.innerHTML = `<p class="text-center p-2 text-xs sm:text-sm" style="color: var(--text-secondary);">No decks saved yet.</p>`;
+                return;
+            }
+            decks.forEach((deck, index) => {
+                const deckItemDiv = document.createElement('div');
+                deckItemDiv.className = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-2 glassmorphic rounded-md text-xs sm:text-sm mb-2';
+                deckItemDiv.innerHTML = `
+                    <span style="color: var(--text-primary);" class="mb-2 sm:mb-0 truncate w-full sm:w-auto" title="${deck.name}">${deck.name} (${deck.cards.reduce((sum, card) => sum + card.quantity, 0)} cards)</span>
+                    <div class="flex gap-2 flex-wrap w-full sm:w-auto justify-end">
+                        <button class="load-deck-btn onboarding-button text-xs py-1 px-2" data-deck-index="${index}" data-load-action="replace">Load (Replace)</button>
+                        <button class="load-deck-btn onboarding-button text-xs py-1 px-2" data-deck-index="${index}" data-load-action="add">Load (Add)</button>
+                        <button class="delete-deck-btn onboarding-button text-xs py-1 px-2" data-deck-index="${index}" style="background-color: var(--icon-color-cost); color: white;">Delete</button>
+                    </div>
+                `;
+                savedDecksList.appendChild(deckItemDiv);
+            });
+
+            savedDecksList.querySelectorAll('.load-deck-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const deckIndex = parseInt(e.currentTarget.dataset.deckIndex);
+                    const loadAction = e.currentTarget.dataset.loadAction;
+                    const decks = getSavedDecks();
+                    if (decks[deckIndex]) {
+                        const deckToLoad = JSON.parse(JSON.stringify(decks[deckIndex].cards)); 
+                        if (loadAction === 'replace') {
+                            currentDeck = deckToLoad;
+                        } else if (loadAction === 'add') {
+                            deckToLoad.forEach(cardToAdd => {
+                                const existingCardInCurrentDeck = currentDeck.find(item => item.id === cardToAdd.id);
+                                if (existingCardInCurrentDeck) {
+                                    existingCardInCurrentDeck.quantity += cardToAdd.quantity;
+                                } else {
+                                    currentDeck.push(cardToAdd);
+                                }
+                            });
+                        }
+                        renderDeckModal(); 
+                        alert(`Deck "${decks[deckIndex].name}" loaded!`);
+                    }
+                });
+            });
+             savedDecksList.querySelectorAll('.delete-deck-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const deckIndex = parseInt(e.currentTarget.dataset.deckIndex);
+                    let decks = getSavedDecks();
+                    if (decks[deckIndex]) {
+                        if (confirm(`Are you sure you want to delete the deck "${decks[deckIndex].name}"?`)) {
+                            decks.splice(deckIndex, 1);
+                            saveDecksToStorage(decks);
+                            renderSavedDecks();
+                            alert("Deck deleted.");
+                        }
+                    }
+                });
+            });
+        }
+
+        function addCardToDeck(cardId) { const cardToAdd = allCards.find(c => c.id === cardId); if (!cardToAdd) return; const existingCardInDeck = currentDeck.find(item => item.id === cardId); if (existingCardInDeck) { existingCardInDeck.quantity++; } else { currentDeck.push({ ...cardToAdd, quantity: 1, 'item-key': cardToAdd.id, 'item-count': 1 }); } renderDeckModal(); if(deckModalOverlay && !deckModalOverlay.classList.contains('active')) { deckModalOverlay.classList.add('active'); } }
+        function renderDeckModal() { if (!deckCardList) return; deckCardList.innerHTML = ''; if (currentDeck.length === 0) { deckCardList.innerHTML = `<p class="text-center p-4 text-sm sm:text-base" style="color: var(--text-secondary);">Your deck is empty.</p>`; return; } currentDeck.forEach(deckItem => { const itemDiv = document.createElement('div'); itemDiv.className = 'flex justify-between items-center p-2 glassmorphic rounded-md mb-2'; const imageName = deckItem.card_name || 'Card'; const imageSrc = deckItem.image_url || `https://placehold.co/50x70/e0e5ec/374151?text=${encodeURIComponent(imageName.substring(0,10))}`; itemDiv.innerHTML = `<img src="${imageSrc}" alt="${imageName}" class="w-8 h-12 sm:w-10 sm:h-14 object-contain mr-2 sm:mr-3 deck-card-list-image"><div class="flex-grow"><p class="font-semibold text-xs sm:text-sm" style="color: var(--text-primary);">${deckItem.card_name}</p><p class="text-xs" style="color: var(--text-secondary);">${deckItem.card_type}</p></div><div class="flex items-center gap-1 sm:gap-0"><button class="deck-quantity-btn p-1 glassmorphic rounded-full mx-0 sm:mx-1 text-xs sm:text-sm" data-card-id="${deckItem.id}" data-action="decrease" style="color: var(--accent-color);">-</button><span class="mx-1 sm:mx-2 text-xs sm:text-sm" style="color: var(--text-primary);">${deckItem.quantity}</span><button class="deck-quantity-btn p-1 glassmorphic rounded-full mx-0 sm:mx-1 text-xs sm:text-sm" data-card-id="${deckItem.id}" data-action="increase" style="color: var(--accent-color);">+</button><button class="deck-remove-btn p-1 sm:p-1.5 glassmorphic rounded-full ml-1 sm:ml-3" data-card-id="${deckItem.id}" title="Remove from Deck"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color: #ef4444;"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>`; deckCardList.appendChild(itemDiv); }); deckCardList.querySelectorAll('.deck-quantity-btn').forEach(btn => { btn.addEventListener('click', (e) => { const cardId = e.currentTarget.dataset.cardId; const action = e.currentTarget.dataset.action; updateDeckQuantity(cardId, action); }); }); deckCardList.querySelectorAll('.deck-remove-btn').forEach(btn => { btn.addEventListener('click', (e) => { const cardId = e.currentTarget.closest('.deck-remove-btn').dataset.cardId; removeCardFromDeck(cardId); }); }); if(currentUser) { renderSavedDecks(); } }
+        function updateDeckQuantity(cardId, action) { const cardInDeck = currentDeck.find(item => item.id === cardId); if (!cardInDeck) return; if (action === 'increase') { cardInDeck.quantity++; } else if (action === 'decrease') { cardInDeck.quantity--; if (cardInDeck.quantity <= 0) { removeCardFromDeck(cardId); return; } } renderDeckModal(); }
+        function removeCardFromDeck(cardId) { currentDeck = currentDeck.filter(item => item.id !== cardId); renderDeckModal(); }
+        if (deckIconButton) { deckIconButton.addEventListener('click', () => { renderDeckModal(); if(deckModalOverlay) deckModalOverlay.classList.add('active'); }); }
+        if (closeDeckModalButton) { closeDeckModalButton.addEventListener('click', () => { if(deckModalOverlay) deckModalOverlay.classList.remove('active'); }); }
+        if (deckModalOverlay) { deckModalOverlay.addEventListener('click', (event) => { if (event.target === deckModalOverlay) { deckModalOverlay.classList.remove('active'); } }); }
+        if (downloadDeckCsvButton) { downloadDeckCsvButton.addEventListener('click', () => { if (currentDeck.length === 0) { alert("Your deck is empty!"); return; } let csvContent = "image,label,item-count,item-key\n"; currentDeck.forEach(deckCard => { const label = `${deckCard.card_type}: ${deckCard.card_name}.jpeg`; const image = deckCard.image_url || ""; const itemKey = deckCard.id; const itemCount = deckCard.quantity; csvContent += `"${image.replace(/"/g, '""')}","${label.replace(/"/g, '""')}",${itemCount},"${itemKey.replace(/"/g, '""')}"\n`; }); const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); if (link.download !== undefined) { const url = URL.createObjectURL(blob); link.setAttribute("href", url); link.setAttribute("download", "my_deck.csv"); link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); } else { alert("CSV download not supported."); } }); }
+        if (importDeckCsvInput) { importDeckCsvInput.addEventListener('change', (event) => { const file = event.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = (e) => { const importedCsvText = e.target.result; try { const newDeck = []; const lines = importedCsvText.trim().split('\n'); const headerLine = lines[0].toLowerCase(); if (!headerLine.includes('image') || !headerLine.includes('label') || !headerLine.includes('item-count') || !headerLine.includes('item-key')) { alert("Imported CSV has incorrect headers."); return; } const headers = headerLine.split(',').map(h => h.replace(/"/g,'').trim()); const imageIndex = headers.indexOf('image'); const labelIndex = headers.indexOf('label'); const itemCountIndex = headers.indexOf('item-count'); const itemKeyIndex = headers.indexOf('item-key'); for (let i = 1; i < lines.length; i++) { const values = lines[i].match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || []; if (values.length < Math.max(imageIndex, labelIndex, itemCountIndex, itemKeyIndex) + 1) continue; const itemKey = (values[itemKeyIndex] || '').replace(/"/g, '').trim(); const itemCount = parseInt(values[itemCountIndex] || '0', 10); const cardData = allCards.find(c => c.id === itemKey); if (cardData && itemCount > 0) { const existingInNewDeck = newDeck.find(dCard => dCard.id === cardData.id); if(existingInNewDeck) { existingInNewDeck.quantity += itemCount; } else { newDeck.push({ ...cardData, quantity: itemCount }); } } } currentDeck = newDeck; renderDeckModal(); if(deckModalOverlay && !deckModalOverlay.classList.contains('active')) { deckModalOverlay.classList.add('active'); } alert("Deck imported successfully!"); } catch (error) { console.error("Error importing deck:", error); alert("Failed to import deck."); } }; reader.readAsText(file); } event.target.value = null; }); }
+        
+        // --- How to Play Page Logic ---
+        const gameRulesText = `
+Official Lumiverse Card Game Rulebook
+
+## Objective
+Win by raising your opponent's heart rate above their Maximum BPM, listed in the top-right corner of their Actor Card. When a player's BPM exceeds their maximum, their opponent gains root access to their cyberbrain, granting them control over the defeated player.
+
+## Game Setup
+1.  **Actor Card Selection:** Each player selects their Actor Card and places it on the Stage.
+2.  **Datalyths:** Attach up to 2 Datalyth Cards to your Actor Card before the game begins.
+3.  **Draw Initial Hand:** Each player draws 5 cards from their deck.
+4.  **Decide Who Goes First:** Flip a coin. The winner decides who takes the first turn. Players cannot attack on their first turn.
+
+### The Stage (Conceptual Illustration Placeholder)
+<div class="rules-illustration-placeholder">Illustration: A diagram of the game board. Each player's side has one Actor Card slot. To the left and right of the Actor are two Datalyth Card slots each (total 4 per player). Below the Actor/Datalyths are five slots arranged horizontally for Effect and Supporter Cards. A Deck area and a Source (discard pile) area are also shown for each player.</div>
+
+### Deck
+Each player selects a deck of at least 40 cards.
+
+## Gameplay
+### Turn Sequence
+1.  **Draw Phase:** Draw 1 card from your deck.
+2.  **Play Phase:** Play any number of cards, provided their conditions are met. Cards include: Care Cards, Item Cards, Server Cards, Effect Cards.
+3.  **Attack Phase:**
+    * Use your Datalyths to attack your opponent's Actor.
+    * Calculate damage by subtracting your attack's Charge Value from your opponent's Datalyth charge.
+    * Damage that exceeds your opponent's active charge increases their Actor's BPM by 10 for every 100 points of excess damage.
+4.  **End Phase:** End your turn and pass play to your opponent.
+
+## Card Types
+### Actor Cards
+* Represent the player in the game.
+* Contain Maximum BPM and Innate Abilities that impact gameplay.
+### Datalyth Cards
+* Attach to Actor Cards to enable attacks.
+* Gain Charge through Care Cards, Item Cards, and Actor abilities.
+* Datalyths charge one at a time, starting with the first in the stream. Each Datalyth can charge up to its Per Lyth Value, as indicated on the card.
+* When a single Datalyth is fully charged, any additional charge is automatically transferred to the next Datalyth in the stream.
+* Once all Datalyths in the stream are fully charged, reaching the Per Stack Value, the entire stack gains an Attack equal to the Stack Damage Value listed on the card, which includes an attack bonus.
+### Care Cards
+* Provide meditative actions that add Charge to Datalyths.
+* Played during the Play Phase before an Attack Phase.
+### Item Cards
+* Equip to Actors or Datalyths to enhance stats or provide new abilities.
+### Server Cards
+* Change the conditions on the Stage.
+* Grant bonuses to specific Actors, Datalyths, or playstyles.
+* Only one Server Card can be active at a time.
+### Effect Cards
+* Provide one-time effects.
+* Sent to the Source (discard pile) after use unless stated otherwise.
+### Supporter Cards
+* Attach to an Actor on the Stage.
+* Provide ongoing or situational bonuses.
+### Script Cards
+* Script cards are placed face down on the Stage and may be activated on any turn following the turn they are set providing the activation requirement listed on the card are fulfilled, after which their effects are activated.
+
+## Key Concepts
+* **Charge Value:** The power level of a Datalyth, raised by Care Cards, Item Cards, and Effect Cards.
+* **Maximum BPM:** The limit listed on Actor Cards. Exceeding this threshold ends the game.
+* **Source:** The discard pile for cards that are no longer active.
+
+## Winning the Game
+### Heart Rate Overload
+Raise your opponent's BPM above their Maximum BPM to achieve victory.
+
+Unleash your strategies with Actor abilities, Server effects, and card combinations in this cybernetic battle of minds and machines!
+        `;
+
+        function formatRules(rulesText) {
+            let html = rulesText;
+            // Convert markdown-like headers to HTML headers
+            html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
+            html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
+            html = html.replace(/^#### (.*$)/gim, '<h5>$1</h5>');
+            
+            // Convert lists (simple version, assuming basic markdown lists)
+            html = html.replace(/^\* (.*$)/gim, '<li>$1</li>'); // Unordered list items
+            html = html.replace(/^\d+\. (.*$)/gim, '<li>$1</li>'); // Ordered list items (will be styled by ol)
+            
+            // Wrap list items in <ul> or <ol> 
+            html = html.replace(/^(<li>.*<\/li>\s*)+/gm, (match) => {
+                if (match.startsWith('<li>1.') || /<li>\d+\./.test(match)) { 
+                    return `<ol>${match.replace(/<li>\d+\. /g, '<li>')}</ol>`;
+                }
+                return `<ul>${match}</ul>`;
+            });
+
+            // Convert bold (**text**)
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert paragraphs
+            html = html.split('\n').map(line => {
+                line = line.trim();
+                if (line.length === 0) return '';
+                if (line.startsWith('<h') || line.startsWith('<ul') || line.startsWith('<ol') || line.startsWith('<li') || line.startsWith('<div class="rules-illustration-placeholder"')) {
+                    return line;
+                }
+                return `<p>${line}</p>`;
+            }).join('\n');
+            
+            return html;
+        }
+
+
+        function renderRulesPage() {
+            const rulesContentContainer = document.getElementById('rulesContentContainer');
+            if (rulesContentContainer) {
+                rulesContentContainer.innerHTML = formatRules(gameRulesText);
+            }
+        }
+
+        if (howToPlayButton) {
+            howToPlayButton.addEventListener('click', showRulesView);
+        }
+        if (backToGalleryFromRulesButton) {
+            backToGalleryFromRulesButton.addEventListener('click', showGalleryView);
+        }
+
+
+        // --- Main Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const userSelectedTheme = localStorage.getItem('theme');
+            applyTheme(userSelectedTheme || 'dark'); 
+            updateUserAuthUI(); 
+            
+            allCards = parseAndMergeCSV(); 
+            if (allCards.length === 0) {
+                noResultsP.textContent = "Could not load card data.";
+                noResultsP.classList.remove('hidden');
+            }
+            setupFilters(); 
+            filterAndRenderCards(); // Initial render based on default filters
+            if (searchInput && searchInput.value === '') { 
+                typeAnimatedPlaceholder();
+                document.querySelector('.blinking-caret').style.display = 'block';
+            } else if (searchInput) {
+                 document.querySelector('.blinking-caret').style.display = 'none';
+            }
+            if(searchInput) searchInput.addEventListener('input', filterAndRenderCards);
+            if(backToGalleryButton) backToGalleryButton.addEventListener('click', showGalleryView);
+        });
+    </script>
+</body>
+</html>
